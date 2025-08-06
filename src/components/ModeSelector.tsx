@@ -1,6 +1,6 @@
 import React from 'react';
-import { COLORS, STRINGS, DURATIONS } from '../../config/constants';
-import '../../styles/welcomeScreen.css';
+import { COLORS, STRINGS, DURATIONS } from '../config/constants';
+import '../styles/welcomeScreen.css';
 
 type Mode = 'light' | 'enhanced';
 

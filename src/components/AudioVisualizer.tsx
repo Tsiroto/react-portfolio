@@ -50,7 +50,7 @@ const AudioVisualizer = ({ isActive }: Props) => {
         if (isActive) {
             // Setup audio
             audioCtx = new AudioContext();
-            const audio = new Audio("/ambient.mp3"); // or use a prop later
+            const audio = new Audio("/assets/night-angel.mp3"); // Updated path to audio file
             audio.loop = true;
             audio.volume = 0.5;
             audioRef.current = audio;

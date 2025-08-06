@@ -1,43 +1,20 @@
-import { Box } from "@mui/material";
-import { useState } from "react";
-import Header from "./components/Header";
-import ProjectSlider from "./components/ProjectSlider";
-import WelcomeScreen from "./components/heroLoader/WelcomeScreen.tsx";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import darkTheme from "./theme/darkTheme";
+import WelcomeScreen from "./pages/WelcomeScreen";
+import {ThemeProvider} from "@mui/material";
 
-function App() {
-    const [loaderComplete, setLoaderComplete] = useState(false);
-    
-    const handleLoaderComplete = () => {
-        setLoaderComplete(true);
-    };
-    
+const App = () => {
     return (
-        <>
-            {/* Hero Loader */}
-            {!loaderComplete && <WelcomeScreen onComplete={handleLoaderComplete} />}
-            
-            {/* Main Content (only visible after loader completes) */}
-            <div style={{ visibility: loaderComplete ? 'visible' : 'hidden' }}>
-                <Header />
-                <Box sx={{ pt: 10 }}>
-                    {/* Projects Grid Section */}
-                    <section id="projects" style={{ padding: "5rem 2rem" }}>
-                        <h2>Projects Grid (Coming soon)</h2>
-                    </section>
-
-                    {/* Project Slider Showcase */}
-                    <section id="showcase" style={{ minHeight: "100vh" }}>
-                        <ProjectSlider />
-                    </section>
-
-                    {/* Contact Section */}
-                    <section id="contact" style={{ padding: "5rem 2rem" }}>
-                        <h2>Contact Section (Coming soon)</h2>
-                    </section>
-                </Box>
-            </div>
-        </>
+        <ThemeProvider theme={darkTheme}>
+            <Router>
+                <Routes>
+                    <Route path="/" element={<WelcomeScreen />} />
+                    <Route path="/light" element={<div>Light Mode Page</div>} />
+                    <Route path="/enhanced" element={<div>Enhanced Mode Page</div>} />
+                </Routes>
+            </Router>
+        </ThemeProvider>
     );
-}
+};
 
 export default App;

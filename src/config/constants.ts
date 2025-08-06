@@ -1,5 +1,3 @@
-// Shared constants for the Hero Loader component
-
 // Colors
 export const COLORS = {
   primary: '#4a90e2',
@@ -16,14 +14,15 @@ export const DURATIONS = {
   fadeOut: 600,
   transition: 300,
   pulse: 1500,
-  loadingMinimum: 2000
+  loadingMinimum: 2000,
+  loadingDefault: 3000
 };
 
 // Text strings
 export const STRINGS = {
   lightMode: 'Light Mode',
   enhancedMode: 'Enhanced Mode',
-  pressEnter: 'Press Enter',
+  pressEnter: 'Interact to Begin',
   tapToStart: 'Tap to Start',
   loading: 'Loading'
 };
