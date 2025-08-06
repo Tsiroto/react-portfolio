@@ -1,10 +1,11 @@
 import { useState } from "react";
 import AudioVisualizer from "./AudioVisualizer";
-import GlowingPrompt from "./GlowingPrompt";
+import Hello from "./Hello.tsx";
 import useDeviceType from "./useDeviceType";
+import "@/styles/welcomeScreen.css";
 
-const HeroLoader = ({ onComplete }: { onComplete: () => void }) => {
-    const { inputMethod } = useDeviceType(); // ✅ get correct value
+const WelcomeScreen = ({ onComplete }: { onComplete: () => void }) => {
+    const { inputMethod } = useDeviceType();
     const [started, setStarted] = useState(false);
 
     const handleStart = () => {
@@ -16,10 +17,10 @@ const HeroLoader = ({ onComplete }: { onComplete: () => void }) => {
         <div className="hero-loader">
             <AudioVisualizer isActive={started} />
             {!started && (
-                <GlowingPrompt deviceType={inputMethod} onStart={handleStart} />
+                <Hello deviceType={inputMethod} onStart={handleStart} />
             )}
         </div>
     );
 };
 
-export default HeroLoader;
+export default WelcomeScreen;

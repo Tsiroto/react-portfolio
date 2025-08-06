@@ -1,6 +1,6 @@
 import React from 'react';
 import { COLORS, STRINGS, DURATIONS } from '../../config/constants';
-import '../../styles/heroLoader.css';
+import '../../styles/welcomeScreen.css';
 
 type Mode = 'light' | 'enhanced';
 

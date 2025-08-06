@@ -2,7 +2,7 @@ import { Box } from "@mui/material";
 import { useState } from "react";
 import Header from "./components/Header";
 import ProjectSlider from "./components/ProjectSlider";
-import HeroLoader from "./components/heroLoader/HeroLoader";
+import WelcomeScreen from "./components/heroLoader/WelcomeScreen.tsx";
 
 function App() {
     const [loaderComplete, setLoaderComplete] = useState(false);
@@ -14,7 +14,7 @@ function App() {
     return (
         <>
             {/* Hero Loader */}
-            {!loaderComplete && <HeroLoader onComplete={handleLoaderComplete} />}
+            {!loaderComplete && <WelcomeScreen onComplete={handleLoaderComplete} />}
             
             {/* Main Content (only visible after loader completes) */}
             <div style={{ visibility: loaderComplete ? 'visible' : 'hidden' }}>
