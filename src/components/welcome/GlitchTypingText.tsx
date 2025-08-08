@@ -1,12 +1,8 @@
-// components/welcome/GlitchTypingText.tsx
 import { useEffect, useState } from "react";
 import { Typography } from "@mui/material";
 import { motion } from "framer-motion";
+import type { GlitchTypingTextProps } from "@/types/types";
 import "../../styles/glitchText.css";
-
-interface GlitchTypingTextProps {
-    text: string;
-}
 
 const GlitchTypingText = ({ text }: GlitchTypingTextProps) => {
     const [displayed, setDisplayed] = useState("");

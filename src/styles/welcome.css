@@ -1,0 +1,87 @@
+@keyframes ambientPulse {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+.ambient-background {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    background: radial-gradient(circle at center, #101010, #000000 80%);
+    background-size: 200% 200%;
+    animation: ambientPulse 15s ease-in-out infinite;
+    opacity: 0.4;
+}
+
+/* === Retro grid === */
+.retro-grid {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;            /* it’s purely visual */
+    z-index: 0;                      /* put it behind buttons/loader */
+
+    /* fade control */
+    opacity: calc(var(--grid-opacity, 1) * var(--grid-audio-boost, 1));
+
+    /* we’ll build the grid on a child “floor” that’s warped in 3D */
+    display: grid;
+    place-items: end;
+}
+
+.retro-grid::before {
+    content: "";
+    width: 160vw;                    /* wider than viewport to avoid edges showing */
+    height: 160vh;
+    transform-origin: bottom center;
+    transform: perspective(900px) rotateX(72deg) translateY(12vh);
+
+    /* two repeating gradients = grid */
+    background-image:
+            repeating-linear-gradient(
+                    to top,
+                    rgba(255,255,255,0) 0px,
+                    rgba(255,255,255,0) 28px,
+                    var(--grid-color, #00d6fc) 30px
+            ),
+            repeating-linear-gradient(
+                    to right,
+                    rgba(255,255,255,0) 0px,
+                    rgba(255,255,255,0) 28px,
+                    var(--grid-color, #00d6fc) 30px
+            );
+
+    /* subtle glow */
+    filter: drop-shadow(0 0 calc(6px * var(--grid-glow, 1)) var(--grid-color, #00d6fc));
+
+    /* animate the “toward camera” motion using Y scroll */
+    background-size: 100% 100%;
+    background-position: 0 0, 0 0;
+    animation: gridScroll var(--grid-speed, 6s) linear infinite;
+
+    /* fade to horizon */
+    -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,1) 35%, rgba(0,0,0,0) 90%);
+    mask-image: linear-gradient(to top, rgba(0,0,0,1) 35%, rgba(0,0,0,0) 90%);
+    opacity: 0.9;
+}
+
+/* optional subtle star field / noise in the sky */
+.retro-grid::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, rgba(0,214,252,0.08) 0%, rgba(0,0,0,0) 60%) no-repeat;
+    opacity: 0.4;
+}
+
+@keyframes gridScroll {
+    from { background-position: 0 0, 0 0; }
+    to   { background-position: 0 120px, 120px 0; }
+}

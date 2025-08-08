@@ -1,10 +1,7 @@
 import { useEffect, useRef } from "react";
+import type { AudioVisualizerProps } from "@/types/types";
 
-interface Props {
-    isActive: boolean;
-}
-
-const AudioVisualizer = ({ isActive }: Props) => {
+const AudioVisualizer = ({ isActive }: AudioVisualizerProps) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const animationRef = useRef<number | null>(null);

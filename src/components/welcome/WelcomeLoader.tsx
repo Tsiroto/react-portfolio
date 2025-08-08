@@ -1,11 +1,7 @@
 import { useEffect, useState } from "react";
 import { Box, Typography } from "@mui/material";
+import type { WelcomeLoaderProps } from "@/types/types";
 import "../../styles/welcomeLoader.css";
-
-interface WelcomeLoaderProps {
-    duration?: number; // in ms
-    onComplete?: () => void;
-}
 
 const WelcomeLoader = ({ duration = 3000, onComplete }: WelcomeLoaderProps) => {
     const [progress, setProgress] = useState(1);

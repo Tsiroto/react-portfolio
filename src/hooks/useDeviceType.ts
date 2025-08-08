@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
-
-type DeviceType = 'mobile' | 'desktop';
-type InputMethod = 'touch' | 'keyboard';
+import type { DeviceType, InputMethod } from '@/types/types';
 
 /**
  * Hook to detect device type and primary input method

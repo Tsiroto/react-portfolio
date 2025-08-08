@@ -1,14 +1,7 @@
 import React from 'react';
 import { COLORS, STRINGS, DURATIONS } from '../config/constants';
+import type { ModeSelectorProps } from '@/types/types';
 import '../styles/welcomeScreen.css';
-
-type Mode = 'light' | 'enhanced';
-
-interface ModeSelectorProps {
-  currentMode: Mode;
-  onModeChange: (mode: Mode) => void;
-  visible: boolean;
-}
 
 const ModeSelector: React.FC<ModeSelectorProps> = ({ 
   currentMode, 
