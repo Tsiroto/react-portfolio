@@ -1,277 +1,194 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import RetroGrid from "../components/welcome/RetroGrid";
-import "../styles/welcome.css";
-import type { WelcomeScreenProps } from "@/types/types";
+import { useMemo, useRef } from "react";
+import { Box } from "@mui/material";
+import { motion, AnimatePresence } from "framer-motion";
 
-import { Box, Button, IconButton } from "@mui/material";
-import { motion } from "framer-motion";
-import VolumeOffIcon from "@mui/icons-material/VolumeOff";
-import VolumeUpIcon from "@mui/icons-material/VolumeUp";
+import { useAudioStore } from "@/store/audioStore";
+import { useUiStore } from "@/store/uiStore";
 
-import WelcomeLoader from "../components/welcome/WelcomeLoader";
-import GlitchTypingText from "../components/welcome/GlitchTypingText";
+import { useSfx } from "@/hooks/useSfx";
+import { useBgAudio } from "@/hooks/useBgAudio";
 
-import { DURATIONS, STRINGS } from "../config/constants";
+import AudioToggle from "@/components/global/AudioToggle";
+import VolumeMenu from "@/components/global/VolumeMenu";
+import GlitchTypingText from "@/components/welcome/GlitchTypingText";
+import WelcomeLoader from "@/components/welcome/WelcomeLoader";
+import ModeButtons from "@/components/welcome/ModeButtons";
 
-import bgMusic from "@/assets/test-bg-audio.mp3";
-import sfxAccept from "@/assets/accept.mp3";
+import { DURATIONS, TRANSITIONS, STRINGS } from "@/config/constants";
 
-const WelcomeScreen = ({ onModeChange }: WelcomeScreenProps) => {
-    const [started, setStarted] = useState(false);
-    const [showOptions, setShowOptions] = useState(false);
-    const [isMuted, setIsMuted] = useState(false);
-    const [glitchVisible, setGlitchVisible] = useState(true);
+export default function WelcomeScreen() {
+    // ---- global state
+    const hasInteracted = useAudioStore((s) => s.hasInteracted);
+    const setHasInteracted = useAudioStore((s) => s.setHasInteracted);
+    const isMuted = useAudioStore((s) => s.isMuted);
 
-    const bgAudioRef = useRef<HTMLAudioElement | null>(null);
-    const sfxRef = useRef<HTMLAudioElement | null>(null);
-    const hoverSfxRef = useRef<HTMLAudioElement | null>(null);
-    const lastHoverTsRef = useRef(0);
+    const introPhase = useUiStore((s) => s.introPhase);
+    const setIntroPhase = useUiStore((s) => s.setIntroPhase);
+    const setMode = useUiStore((s) => s.setMode);
 
-    // Move this ABOVE the analyser effect so it's definitely in scope
-    const gridWrapRef = useRef<HTMLDivElement | null>(null);
-    const audioGraphMadeRef = useRef(false);
+    // ---- sfx hook (define before using)
+    const { playClick, playHover } = useSfx();
 
-    const handleStart = useCallback(() => {
-        if (started) return;
-        setStarted(true);
-        setGlitchVisible(false);
+    // ---- bg audio (gridRef drives CSS vars)
+    const gridRef = useRef<HTMLDivElement | null>(null);
+    const bgSrc = useMemo(() => "/audio/night-angel.mp3", []); // your file path
+    useBgAudio({ started: hasInteracted && introPhase !== "idle", isMuted, src: bgSrc, gridRef });
 
-        if (!bgAudioRef.current) {
-            const audio = new Audio(bgMusic);
-            audio.loop = true;
-            audio.volume = isMuted ? 0 : 0.5;
-            audio.play().catch((err) => console.warn("Autoplay blocked:", err));
-            bgAudioRef.current = audio;
-        }
-        // Loader will flip showOptions via onComplete
-    }, [isMuted, started]);
+    // ---- overlay fade: black -> subtle -> none
+    const showPrompt = !hasInteracted && introPhase === "idle";
+    const showLoader = hasInteracted && introPhase === "loading";
+    const showModeSelect = hasInteracted && introPhase === "select";
 
-    // Build analyser tied to the SAME bgAudio
-    useEffect(() => {
-        if (!started || !bgAudioRef.current || audioGraphMadeRef.current) return;
-
-        let rafId: number;
-        let audioCtx: AudioContext | null = null;
-        let analyser: AnalyserNode | null = null;
-        let source: MediaElementAudioSourceNode | null = null;
-
-        try {
-            audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
-            source = audioCtx.createMediaElementSource(bgAudioRef.current);
-            analyser = audioCtx.createAnalyser();
-            analyser.fftSize = 256; // 128 bins
-            source.connect(analyser);
-            analyser.connect(audioCtx.destination);
-        } catch (e) {
-            console.warn("AudioContext init failed:", e);
-            return;
-        }
-
-        audioGraphMadeRef.current = true;
-        const data = new Uint8Array(analyser.frequencyBinCount);
-
-        const loop = () => {
-            if (!analyser || !gridWrapRef.current) {
-                rafId = requestAnimationFrame(loop);
-                return;
-            }
-            analyser.getByteFrequencyData(data);
-
-            // Simple low-mid energy
-            let sum = 0;
-            const low = 2, high = 32;
-            for (let i = low; i < high; i++) sum += data[i];
-            const avg = sum / (high - low);        // 0..255
-            const norm = Math.min(1, avg / 180);   // tame
-
-            gridWrapRef.current.style.setProperty("--grid-audio-boost", (0.2 + norm * 0.8).toString());
-            gridWrapRef.current.style.setProperty("--grid-glow", (0.6 + norm * 0.8).toString());
-
-            rafId = requestAnimationFrame(loop);
-        };
-        rafId = requestAnimationFrame(loop);
-
-        return () => {
-            cancelAnimationFrame(rafId);
-            // keep audioCtx alive while on this screen
-        };
-    }, [started]);
-
-    const playSfx = useCallback(() => {
-        if (!isMuted && sfxRef.current) {
-            sfxRef.current.currentTime = 0;
-            sfxRef.current.play().catch((err) => console.warn("SFX blocked:", err));
-        }
-    }, [isMuted]);
-
-    const playHoverSfx = useCallback(() => {
-        if (!started || isMuted || !hoverSfxRef.current) return;
-        const now = performance.now();
-        if (now - lastHoverTsRef.current < 120) return;
-        lastHoverTsRef.current = now;
-
-        const el = hoverSfxRef.current;
-        el.currentTime = 0;
-        el.play().catch((err) => console.warn("Hover SFX blocked:", err));
-    }, [started, isMuted]);
-
-    const toggleMute = () => {
-        const newMuteState = !isMuted;
-        setIsMuted(newMuteState);
-        if (bgAudioRef.current) {
-            bgAudioRef.current.volume = newMuteState ? 0 : 0.5;
+    const onFirstInteraction = () => {
+        if (!hasInteracted) {
+            setHasInteracted(true);
+            playClick();
+            setIntroPhase("loading");
         }
     };
 
-    useEffect(() => {
-        sfxRef.current = new Audio(sfxAccept);
-        sfxRef.current.volume = 0.5;
+    const handleLoaderComplete = () => {
+        setIntroPhase("select");
+    };
 
-        hoverSfxRef.current = new Audio(sfxAccept);
-        hoverSfxRef.current.volume = 0.35;
+    const handleSelectLight = () => {
+        playClick();
+        setMode("light");
+        // later: navigate or just render <Portfolio mode="light" />
+    };
 
-        return () => {
-            if (bgAudioRef.current) {
-                bgAudioRef.current.pause();
-                bgAudioRef.current = null;
-            }
-        };
-    }, []);
-
-    useEffect(() => {
-        if (started) return;
-
-        const trigger = () => {
-            playSfx();
-            handleStart();
-        };
-
-        const onClick = () => trigger();
-        const onKey = () => trigger();
-
-        window.addEventListener("click", onClick);
-        window.addEventListener("keydown", onKey);
-
-        return () => {
-            window.removeEventListener("click", onClick);
-            window.removeEventListener("keydown", onKey);
-        };
-    }, [handleStart, playSfx, started]);
+    const handleSelectEnhanced = () => {
+        playClick();
+        setMode("enhanced");
+        // later: navigate or just render <Portfolio mode="enhanced" />
+    };
 
     return (
         <Box
             sx={{
                 position: "relative",
-                width: "100vw",
-                height: "100vh",
+                width: "100%",
+                height: "100dvh",
                 overflow: "hidden",
                 bgcolor: "black",
-                color: "white",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                flexDirection: "column",
             }}
+            onClick={showPrompt ? onFirstInteraction : undefined}
+            onKeyDown={showPrompt ? onFirstInteraction : undefined}
+            tabIndex={0} // allow key events
         >
-            {/* RETRO GRID — behind everything */}
-            {started && (
-                <motion.div
-                    ref={gridWrapRef}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: showOptions ? 0.9 : 0.4 }}
-                    transition={{ duration: 0.8, ease: "easeOut" }}
-                    style={{
-                        position: "absolute",
-                        inset: 0,
-                        zIndex: 0,
-                        pointerEvents: "none",
-                    }}
-                >
-                    <RetroGrid speedSec={8} lineColor="#00d6fc" />
-                </motion.div>
-            )}
+            {/* Background layer (subtle at idle/loading, full at select) */}
+            <Box
+                ref={gridRef}
+                className="ambient-background" // you already have welcome.css
+                sx={{
+                    position: "absolute",
+                    inset: 0,
+                    zIndex: 0,
+                    opacity: showModeSelect ? 1 : 0.4,
+                    transition: "opacity 800ms ease",
+                }}
+            />
 
-            {/* Before start background */}
-            {!started && <div className="ambient-background" />}
-
-            {/* Mute Toggle */}
-            {started && (
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.6, delay: 0.3 }}
-                    style={{ position: "absolute", top: 16, right: 16, zIndex: 3 }}
-                >
-                    <IconButton
-                        onClick={toggleMute}
-                        sx={{ color: "#00d6fc" }}
-                        aria-label={isMuted ? "Unmute Audio" : "Mute Audio"}
-                        onMouseEnter={playHoverSfx}
-                        onFocus={playHoverSfx}
-                    >
-                        {isMuted ? <VolumeOffIcon /> : <VolumeUpIcon />}
-                    </IconButton>
-                </motion.div>
-            )}
-
-            {/* Glitch prompt */}
-            <motion.div
-                initial={{ opacity: 1 }}
-                animate={{ opacity: glitchVisible ? 1 : 0 }}
-                transition={{ duration: 0.5 }}
-                style={{ zIndex: 2 }}
-            >
-                {!started && <GlitchTypingText text={STRINGS.pressEnter} />}
-            </motion.div>
-
-            {/* Loader */}
-            {started && !showOptions && (
-                <div style={{ position: "relative", zIndex: 2 }}>
-                    <WelcomeLoader
-                        duration={DURATIONS.loadingDefault}
-                        onComplete={() => setShowOptions(true)}
+            {/* Black overlay that dissolves by phase */}
+            <AnimatePresence>
+                {(showPrompt || showLoader) && (
+                    <motion.div
+                        key="black-overlay"
+                        initial={{ opacity: 1 }}
+                        animate={{ opacity: showLoader ? 0.35 : 0.7 }}
+                        exit={{ opacity: 0 }}
+                        transition={TRANSITIONS.overlayFade ?? { duration: 0.6 }}
+                        style={{
+                            position: "absolute",
+                            inset: 0,
+                            background: "black",
+                            zIndex: 1,
+                            pointerEvents: "none",
+                        }}
                     />
-                </div>
-            )}
+                )}
+            </AnimatePresence>
 
-            {/* Mode buttons */}
-            {showOptions && (
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.6 }}
-                    style={{ display: "flex", gap: "1.5rem", marginTop: "2rem", zIndex: 2 }}
-                >
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={() => {
-                            playSfx();
-                            onModeChange("light");
+            {/* Prompt (first interaction) */}
+            <AnimatePresence>
+                {showPrompt && (
+                    <motion.div
+                        key="prompt"
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -6 }}
+                        transition={TRANSITIONS.fast}
+                        style={{
+                            position: "absolute",
+                            inset: 0,
+                            zIndex: 2,
+                            display: "grid",
+                            placeItems: "center",
                         }}
-                        onMouseEnter={playHoverSfx}
-                        onFocus={playHoverSfx}
-                        sx={{ width: 150 }}
                     >
-                        Light
-                    </Button>
-                    <Button
-                        variant="contained"
-                        color="secondary"
-                        onClick={() => {
-                            playSfx();
-                            onModeChange("enhanced");
+                        <GlitchTypingText text={STRINGS.pressEnter} />
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Loader (runs for configured duration, dissolves black) */}
+            <AnimatePresence>
+                {showLoader && (
+                    <motion.div
+                        key="loader"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={TRANSITIONS.fast}
+                        style={{
+                            position: "absolute",
+                            inset: 0,
+                            zIndex: 3,
+                            display: "grid",
+                            placeItems: "center",
                         }}
-                        onMouseEnter={playHoverSfx}
-                        onFocus={playHoverSfx}
-                        sx={{ width: 150 }}
                     >
-                        Enhanced
-                    </Button>
-                </motion.div>
-            )}
+                        <WelcomeLoader
+                            duration={DURATIONS.loadingDefault}
+                            onComplete={handleLoaderComplete}
+                        />
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Mode select + audio UI */}
+            <AnimatePresence>
+                {showModeSelect && (
+                    <motion.div
+                        key="mode-select"
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={TRANSITIONS.fast}
+                        style={{ position: "absolute", inset: 0, zIndex: 4 }}
+                    >
+                        <Box
+                            sx={{
+                                height: "100%",
+                                display: "grid",
+                                placeItems: "center",
+                                p: 2,
+                            }}
+                        >
+                            <ModeButtons
+                                show
+                                onLight={handleSelectLight}
+                                onEnhanced={handleSelectEnhanced}
+                                onHover={playHover}
+                            />
+                        </Box>
+
+                        {/* Audio controls (appear after interaction) */}
+                        <AudioToggle />
+                        <VolumeMenu />
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </Box>
     );
-};
-
-export default WelcomeScreen;
+}

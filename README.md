@@ -67,3 +67,42 @@ export default tseslint.config([
   },
 ])
 ```
+┌──────────────────────────────────────────────────────────────────┐
+│                           Audio Layer                            │
+├──────────────────────────────────────────────────────────────────┤
+│                   Zustand Store: useAudioStore                   │
+│  ──────────────────────────────────────────────────────────────  │
+│  State: isMuted | hasInteracted | sfxVolume | bgVolume           │
+│  Actions: setMuted · toggleMuted · setHasInteracted ·            │
+│           setSfxVolume · setBgVolume · reset                     │
+│  Persisted: isMuted, sfxVolume, bgVolume                         │
+│  Ephemeral: hasInteracted                                        │
+└──────────────────────────────────────────────────────────────────┘
+▲                          ▲                      ▲
+│                          │                      │
+subscribes                 subscribes             subscribes
+│                          │                      │
+│                          │                      │
+┌─────────────────────┐     ┌──────────────────────┐   ┌──────────────────────┐
+│   AudioToggle UI    │     │     VolumeMenu       │   │      useSfx()        │
+│  (IconButton, MUI)  │     │  (Popover + Sliders) │   │  (click/hover SFX)   │
+│  - reads: isMuted   │     │  - reads: isMuted,   │   │  - reads: isMuted,   │
+│          hasInter.. │     │           sfxVolume, │   │           sfxVolume, │
+│  - calls: toggleMuted│    │           bgVolume   │   │           hasInter.. │
+│  - hidden until      │    │  - calls: setMuted,  │   │  - plays after       │
+│    hasInteracted     │    │          setSfxVolume│   │    first interaction │
+└─────────┬───────────┘    │          setBgVolume  │   └──────────┬───────────┘
+│                └──────────────────────┘              │
+│                                                      │
+│                      subscribes                      │
+│                                                      │
+│                             ▲                        │
+│                             │                        │
+│                        ┌──────────┐                  │
+└──────────────────────► │ useBgAudio│ ◄───────────────┘
+│ (BGM +    │
+│  Analyser)│
+│ - reads: isMuted, bgVolume,
+│           hasInteracted
+│ - sets CSS vars on gridRef
+└──────────┘

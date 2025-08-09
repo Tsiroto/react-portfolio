@@ -69,7 +69,7 @@
     /* fade to horizon */
     -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,1) 35%, rgba(0,0,0,0) 90%);
     mask-image: linear-gradient(to top, rgba(0,0,0,1) 35%, rgba(0,0,0,0) 90%);
-    opacity: 0.9;
+    opacity: 0.3;
 }
 
 /* optional subtle star field / noise in the sky */

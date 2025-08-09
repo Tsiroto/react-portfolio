@@ -14,7 +14,8 @@ const WelcomeLoader = ({ duration = 3000, onComplete }: WelcomeLoaderProps) => {
             setProgress((prev) => {
                 if (prev >= 100) {
                     clearInterval(interval);
-                    onComplete?.();
+                    // Use setTimeout to call onComplete asynchronously, preventing setState during render
+                    setTimeout(() => onComplete?.(), 0);
                     return 100;
                 }
                 return prev + 1;
@@ -27,7 +28,7 @@ const WelcomeLoader = ({ duration = 3000, onComplete }: WelcomeLoaderProps) => {
     return (
         <Box className="loader">
             <Typography id="counter" component="span">
-                Loading <i>{progress}%</i>
+                Loading {progress}%
             </Typography>
             <Box className="spinner" />
         </Box>
