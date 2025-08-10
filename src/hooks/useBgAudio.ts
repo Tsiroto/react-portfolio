@@ -1,7 +1,7 @@
 import { useEffect, useRef, type RefObject } from "react";
 import { useAudioStore } from "@/store/audioStore";
 
-type DivRef = RefObject<HTMLDivElement>;
+type DivRef = RefObject<HTMLDivElement | null>;
 
 export function useBgAudio(params: {
     started: boolean;
@@ -22,7 +22,29 @@ export function useBgAudio(params: {
     const analyserRef = useRef<AnalyserNode | null>(null);
     const rafIdRef = useRef<number>(0);
 
-    // Create/teardown audio element
+    // Keep latest volume-related values without triggering effect deps.
+    const latest = useRef({
+        isMuted,
+        bgVolume,
+        overrideVolume,
+    });
+
+    // Keep latest values in sync
+    useEffect(() => {
+        // keep ref in sync (no deps issues)
+        latest.current.isMuted = isMuted;
+        latest.current.bgVolume = bgVolume;
+        latest.current.overrideVolume = overrideVolume;
+
+        // update current audio volume (no temp var)
+        if (audioRef.current) {
+            audioRef.current.volume = latest.current.isMuted
+                ? 0
+                : clamp01(latest.current.overrideVolume ?? latest.current.bgVolume);
+        }
+    }, [isMuted, bgVolume, overrideVolume]);
+
+    // Create/teardown <audio> element (no restarts on mute/volume changes)
     useEffect(() => {
         if (!(started && hasInteracted)) {
             if (audioRef.current) {
@@ -35,9 +57,9 @@ export function useBgAudio(params: {
 
         const a = new Audio(src);
         a.loop = true;
-        a.preload = "auto"; // ✅ help initial play
-        a.crossOrigin = "anonymous"; // ✅ ensure analyser works with remote files
-        a.volume = isMuted ? 0 : clamp01(overrideVolume ?? bgVolume);
+        a.preload = "auto";
+        a.crossOrigin = "anonymous";
+        a.volume = latestVolume(latest.current); // read once from ref (no deps)
         a.play().catch(() => {}); // ignore autoplay errors
         audioRef.current = a;
 
@@ -46,9 +68,10 @@ export function useBgAudio(params: {
             a.src = "";
             if (audioRef.current === a) audioRef.current = null;
         };
-    }, [started, hasInteracted, src, isMuted, bgVolume, overrideVolume]);
+        // Only recreate when these truly change
+    }, [started, hasInteracted, src]);
 
-    // Build analyser graph once per audio element
+    // Build analyzer graph once per created audio element.
     useEffect(() => {
         const audioEl = audioRef.current;
         if (!started || !audioEl || audioGraphMadeRef.current) return;
@@ -65,8 +88,6 @@ export function useBgAudio(params: {
 
         try {
             ctx = new AudioContextCtor();
-
-            // ✅ resume context if suspended (Safari)
             if (ctx.state === "suspended") {
                 ctx.resume().catch(() => {});
             }
@@ -114,18 +135,20 @@ export function useBgAudio(params: {
             ctxRef.current = null;
             audioGraphMadeRef.current = false;
         };
-    }, [started, gridRef]);
-
-    // Keep volume in sync with store/override/mute, clamped to [0,1]
-    useEffect(() => {
-        if (audioRef.current) {
-            audioRef.current.volume = isMuted ? 0 : clamp01(overrideVolume ?? bgVolume);
-        }
-    }, [isMuted, bgVolume, overrideVolume]);
+        // rebuild graph if the track changes or we (re)start
+    }, [started, src, gridRef]);
 
     return { audioRef };
 }
 
-function clamp01(v: number) {
-    return Math.max(0, Math.min(1, v));
+function clamp01(v: number | undefined) {
+    return Math.max(0, Math.min(1, v ?? 0));
+}
+
+function latestVolume(latest: {
+    isMuted: boolean;
+    bgVolume: number;
+    overrideVolume: number | undefined;
+}) {
+    return latest.isMuted ? 0 : clamp01(latest.overrideVolume ?? latest.bgVolume);
 }

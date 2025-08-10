@@ -1,26 +1,23 @@
 import { createTheme } from "@mui/material/styles";
+import { brandPalette, typography, components } from "./base";
 
-const darkTheme = createTheme({
+export default createTheme({
     palette: {
         mode: "dark",
-        primary: {
-            main: "#00d6fc",
-        },
-        background: {
-            default: "#0d0d0f",
-            paper: "#1a1a1e",
-        },
-        text: {
-            primary: "#e0f7fa",
-        },
+        ...brandPalette,
+        accent: { main: "#ff6b6b" },              // from old COLORS.accent
+        glow: { main: "rgba(80, 227, 194, 0.6)" },// from old COLORS.glow
+        background: { default: "#0c0c0c", paper: "#1a1a1a" }, // old COLORS.dark
+        text: { primary: "#f5f5f5", secondary: "#b0b0b0" },
+        divider: "rgba(255,255,255,0.12)",
+        action: { hover: "rgba(255,255,255,0.04)" },
     },
-    typography: {
-        fontFamily: `'Roboto', 'Helvetica', 'Arial', sans-serif`,
-        button: {
-            textTransform: "uppercase",
-            letterSpacing: "0.1em",
-        },
+    typography,
+    components: {
+        ...components,
+        // (optional) remove any default body background image
+        MuiCssBaseline: { styleOverrides: { body: { backgroundImage: "none" } } },
     },
+    // (optional) global rounding
+    shape: { borderRadius: 16 },
 });
-
-export default darkTheme;

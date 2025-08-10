@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import type { StateStorage } from "zustand/middleware";
 import type { AudioState } from "@/types/types";
+import { AUDIO_DEFAULTS } from "@/config/constants";
 
 const noopStorage: StateStorage = {
     getItem: () => null,
@@ -14,12 +15,10 @@ const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
 export const useAudioStore = create<AudioState>()(
     persist(
         (set, get) => ({
-            isMuted: false,
+            isMuted: AUDIO_DEFAULTS.isMuted,
             hasInteracted: false,
-
-            // defaults
-            sfxVolume: 1,
-            bgVolume: 0.5,
+            sfxVolume: AUDIO_DEFAULTS.sfxVolume,
+            bgVolume: AUDIO_DEFAULTS.bgVolume,
 
             setMuted: (muted) => set({ isMuted: muted }),
             toggleMuted: () => set({ isMuted: !get().isMuted }),
@@ -28,12 +27,11 @@ export const useAudioStore = create<AudioState>()(
             setSfxVolume: (v) => set({ sfxVolume: clamp01(v) }),
             setBgVolume:  (v) => set({ bgVolume:  clamp01(v) }),
 
-            reset: () =>
+            resetPrefs: () =>
                 set({
-                    isMuted: false,
-                    hasInteracted: false,
-                    sfxVolume: 1,
-                    bgVolume: 0.5,
+                    isMuted: AUDIO_DEFAULTS.isMuted,
+                    sfxVolume: AUDIO_DEFAULTS.sfxVolume,
+                    bgVolume: AUDIO_DEFAULTS.bgVolume,
                 }),
         }),
         {
@@ -41,6 +39,7 @@ export const useAudioStore = create<AudioState>()(
             storage: createJSONStorage(() =>
                 typeof window !== "undefined" ? window.localStorage : noopStorage
             ),
+            // Persist only user prefs (and not hasInteracted)
             partialize: (state): Partial<AudioState> => ({
                 isMuted: state.isMuted,
                 sfxVolume: state.sfxVolume,

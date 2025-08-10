@@ -1,61 +1,74 @@
-// 🎨 UI colors
-export const COLORS = {
-    primary: '#4a90e2',
-    secondary: '#50e3c2',
-    dark: '#121212',
-    light: '#f5f5f5',
-    accent: '#ff6b6b',
-    glow: 'rgba(80, 227, 194, 0.6)',
-    audioIcon: 'rgba(80, 227, 194, 0.6)', // AudioToggle icon color
-};
+import type { Transition } from "framer-motion";
 
 // ⏱ Animation durations (ms)
 export const DURATIONS = {
     loadingMinimum: 2000,
     loadingDefault: 3000,
-};
+} as const;
 
 // 🔲 Opacity levels
 export const OPACITY = {
-    gridIdle: 0.35,
-    gridActive: 1,
+    bgDim: 0.35,
+    bgFull: 1,
     overlayIn: 1,
     overlayOut: 0,
 } as const;
 
+export interface TransitionConfig {
+    duration: number;
+    ease?: string;
+    type?: string;
+    stiffness?: number;
+    damping?: number;
+}
+
 // 🔄 Transition presets
-export const TRANSITIONS = {
+export const TRANSITIONS: Record<"gridFade" | "overlayFade" | "fast", Transition> = {
     gridFade: { duration: 0.6, ease: "easeInOut" },
     overlayFade: { duration: 0.6, ease: "easeInOut" },
-    audioToggleFade: { duration: 0.4, ease: "easeOut" },
-    fast: { type: "spring", stiffness: 300, damping: 24, duration: 0.25 },
-} as const;
+    fast: { type: "spring", stiffness: 300, damping: 24 }
+};
 
 // 📍 Fixed UI element positions
 export const POSITIONS = {
-    audioToggle: { top: 16, right: 16, zIndex: 9999 },
-};
+    siteOptions: { top: 16, right: 16, zIndex: 9999 },
+} as const;
 
-// 📝 UI strings
-export const STRINGS = {
-    lightMode: 'Light Mode',
-    enhancedMode: 'Enhanced Mode',
-    pressEnter: 'Interact to Begin',
-    tapToStart: 'Tap to Start',
-    loading: 'Loading...',
-    muteAudio: 'Mute Audio',
-    mute: "Mute",
-    unmuteAudio: 'Unmute Audio',
-    volume: "Volume",
-    sfxVolume: "SFX Volume",
-    bgmVolume: "Background Volume",
-    audioToggleLabelOn: "Mute audio",
-    audioToggleLabelOff: "Unmute audio",
-    audioToggleTipOn: "Click to mute",
-    audioToggleTipOff: "Click to unmute",
+// 🔊 Audio defaults
+export const AUDIO_DEFAULTS = {
+    isMuted: false,
+    sfxVolume: 0.60,
+    bgVolume: 0.80,
+} as const;
+
+// 🎨 UI defaults
+export const UI_DEFAULTS = {
+    mode: "enhanced" as const,
 };
 
 // ⚙ Feature toggles
 export const FEATURES = {
     audioEnabled: true,
-};
+} as const;
+
+// 📏 UI timing values
+export const POPOVER_MS = 250 as const;
+
+// 🌗 Theme options
+export const DEFAULT_THEME: "dark" | "light" = "dark";
+
+// 📝 UI strings
+export const STRINGS = {
+    siteOptions: "Site Options",
+    theme: "Theme",
+    lightMode: "Light Mode",
+    enhancedMode: "Enhanced Mode",
+    pressEnter: "Interact to Begin",
+    tapToStart: "Tap to Start",
+    loading: "Loading...",
+    volume: "Audio",
+    mute: "Mute",
+    sfxVolume: "SFX Volume",
+    bgmVolume: "Background Volume",
+    reset: "Reset to defaults",
+} as const;

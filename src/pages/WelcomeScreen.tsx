@@ -1,4 +1,4 @@
-import { useMemo, useRef } from "react";
+import { useRef, useCallback } from "react";
 import { Box } from "@mui/material";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -8,59 +8,70 @@ import { useUiStore } from "@/store/uiStore";
 import { useSfx } from "@/hooks/useSfx";
 import { useBgAudio } from "@/hooks/useBgAudio";
 
-import AudioToggle from "@/components/global/AudioToggle";
-import VolumeMenu from "@/components/global/VolumeMenu";
+import SiteOptions from "@/components/global/SiteOptions";
 import GlitchTypingText from "@/components/welcome/GlitchTypingText";
 import WelcomeLoader from "@/components/welcome/WelcomeLoader";
 import ModeButtons from "@/components/welcome/ModeButtons";
 
-import { DURATIONS, TRANSITIONS, STRINGS } from "@/config/constants";
+import bgm from "@/assets/test-bg-audio.mp3";
+import { DURATIONS, OPACITY, TRANSITIONS, STRINGS } from "@/config/constants";
+import type { Mode, WelcomeScreenProps } from "@/types/types";
 
-export default function WelcomeScreen() {
-    // ---- global state
+export default function WelcomeScreen({ onModeChange }: WelcomeScreenProps) {
+    // Global audio state
     const hasInteracted = useAudioStore((s) => s.hasInteracted);
     const setHasInteracted = useAudioStore((s) => s.setHasInteracted);
     const isMuted = useAudioStore((s) => s.isMuted);
 
+    // Intro phase state
     const introPhase = useUiStore((s) => s.introPhase);
     const setIntroPhase = useUiStore((s) => s.setIntroPhase);
-    const setMode = useUiStore((s) => s.setMode);
+    const setMode = useUiStore((s) => s.setMode); // keeps local "light|enhanced" if you use it elsewhere
 
-    // ---- sfx hook (define before using)
+    // SFX
     const { playClick, playHover } = useSfx();
 
-    // ---- bg audio (gridRef drives CSS vars)
+    // Background visual + audio
     const gridRef = useRef<HTMLDivElement | null>(null);
-    const bgSrc = useMemo(() => "/audio/night-angel.mp3", []); // your file path
-    useBgAudio({ started: hasInteracted && introPhase !== "idle", isMuted, src: bgSrc, gridRef });
+    useBgAudio({
+        started: hasInteracted && introPhase !== "idle",
+        isMuted,
+        src: bgm,
+        gridRef,
+    });
 
-    // ---- overlay fade: black -> subtle -> none
+    // Derived UI flags
     const showPrompt = !hasInteracted && introPhase === "idle";
     const showLoader = hasInteracted && introPhase === "loading";
     const showModeSelect = hasInteracted && introPhase === "select";
 
-    const onFirstInteraction = () => {
-        if (!hasInteracted) {
-            setHasInteracted(true);
-            playClick();
-            setIntroPhase("loading");
-        }
-    };
+    // First interaction handler (click, touch, Enter/Space)
+    const begin = useCallback(() => {
+        if (hasInteracted) return;
+        setHasInteracted(true);
+        playClick();
+        setIntroPhase("loading");
+    }, [hasInteracted, setHasInteracted, playClick, setIntroPhase]);
+
+    const onKeyDown = useCallback(
+        (e: React.KeyboardEvent) => {
+            if (!showPrompt) return;
+            if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                begin();
+            }
+        },
+        [showPrompt, begin]
+    );
 
     const handleLoaderComplete = () => {
         setIntroPhase("select");
     };
 
-    const handleSelectLight = () => {
+    const handleSelectMode = (mode: Mode) => {
         playClick();
-        setMode("light");
-        // later: navigate or just render <Portfolio mode="light" />
-    };
-
-    const handleSelectEnhanced = () => {
-        playClick();
-        setMode("enhanced");
-        // later: navigate or just render <Portfolio mode="enhanced" />
+        setMode(mode);
+        onModeChange?.(mode);
     };
 
     return (
@@ -70,34 +81,36 @@ export default function WelcomeScreen() {
                 width: "100%",
                 height: "100dvh",
                 overflow: "hidden",
-                bgcolor: "black",
+                bgcolor: (t) => t.palette.background.default,
             }}
-            onClick={showPrompt ? onFirstInteraction : undefined}
-            onKeyDown={showPrompt ? onFirstInteraction : undefined}
-            tabIndex={0} // allow key events
+            onClick={showPrompt ? begin : undefined}
+            onPointerDown={showPrompt ? begin : undefined}
+            onKeyDown={onKeyDown}
+            tabIndex={0} // enable key events
+            role="application"
+            aria-label="Welcome Screen"
         >
-            {/* Background layer (subtle at idle/loading, full at select) */}
+            {/* Background layer (subtle → full) */}
             <Box
                 ref={gridRef}
-                className="ambient-background" // you already have welcome.css
+                className="ambient-background"
                 sx={{
                     position: "absolute",
                     inset: 0,
                     zIndex: 0,
-                    opacity: showModeSelect ? 1 : 0.4,
+                    opacity: showModeSelect ? OPACITY.bgFull : OPACITY.bgDim,
                     transition: "opacity 800ms ease",
                 }}
             />
 
-            {/* Black overlay that dissolves by phase */}
             <AnimatePresence>
                 {(showPrompt || showLoader) && (
                     <motion.div
                         key="black-overlay"
-                        initial={{ opacity: 1 }}
+                        initial={{ opacity: OPACITY.overlayIn }}
                         animate={{ opacity: showLoader ? 0.35 : 0.7 }}
-                        exit={{ opacity: 0 }}
-                        transition={TRANSITIONS.overlayFade ?? { duration: 0.6 }}
+                        exit={{ opacity: OPACITY.overlayOut }}
+                        transition={TRANSITIONS.overlayFade}
                         style={{
                             position: "absolute",
                             inset: 0,
@@ -109,7 +122,7 @@ export default function WelcomeScreen() {
                 )}
             </AnimatePresence>
 
-            {/* Prompt (first interaction) */}
+            {/* First interaction prompt */}
             <AnimatePresence>
                 {showPrompt && (
                     <motion.div
@@ -131,7 +144,7 @@ export default function WelcomeScreen() {
                 )}
             </AnimatePresence>
 
-            {/* Loader (runs for configured duration, dissolves black) */}
+            {/* Loader */}
             <AnimatePresence>
                 {showLoader && (
                     <motion.div
@@ -156,7 +169,7 @@ export default function WelcomeScreen() {
                 )}
             </AnimatePresence>
 
-            {/* Mode select + audio UI */}
+            {/* Mode selection + options */}
             <AnimatePresence>
                 {showModeSelect && (
                     <motion.div
@@ -177,15 +190,12 @@ export default function WelcomeScreen() {
                         >
                             <ModeButtons
                                 show
-                                onLight={handleSelectLight}
-                                onEnhanced={handleSelectEnhanced}
+                                onModeChange={handleSelectMode}
                                 onHover={playHover}
                             />
                         </Box>
 
-                        {/* Audio controls (appear after interaction) */}
-                        <AudioToggle />
-                        <VolumeMenu />
+                        <SiteOptions />
                     </motion.div>
                 )}
             </AnimatePresence>

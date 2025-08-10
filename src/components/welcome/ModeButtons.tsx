@@ -1,14 +1,9 @@
 import { Button } from "@mui/material";
 import { motion } from "framer-motion";
 import { STRINGS, TRANSITIONS } from "@/config/constants";
-import type { ModeButtonsProps } from "@/types/types";
+import type { ModeSelectorProps } from "@/types/types";
 
-export default function ModeButtons({
-                                        show,
-                                        onLight,
-                                        onEnhanced,
-                                        onHover,
-                                    }: ModeButtonsProps) {
+export default function ModeButtons({ show, onModeChange, onHover }: ModeSelectorProps) {
     if (!show) return null;
 
     return (
@@ -21,10 +16,10 @@ export default function ModeButtons({
             <Button
                 variant="contained"
                 color="primary"
-                onClick={onLight}
+                onClick={() => onModeChange("light")}
                 onMouseEnter={onHover}
                 onFocus={onHover}
-                sx={{ width: 150 }}
+                sx={{ width: 170 }}
                 aria-label={STRINGS.lightMode}
             >
                 {STRINGS.lightMode}
@@ -33,10 +28,10 @@ export default function ModeButtons({
             <Button
                 variant="contained"
                 color="secondary"
-                onClick={onEnhanced}
+                onClick={() => onModeChange("enhanced")}
                 onMouseEnter={onHover}
                 onFocus={onHover}
-                sx={{ width: 150 }}
+                sx={{ width: 170 }}
                 aria-label={STRINGS.enhancedMode}
             >
                 {STRINGS.enhancedMode}

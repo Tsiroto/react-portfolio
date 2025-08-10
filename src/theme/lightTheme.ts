@@ -1,67 +1,20 @@
-import { createTheme } from '@mui/material/styles';
+import { createTheme } from "@mui/material/styles";
+import { brandPalette, typography, components } from "./base";
 
-const lightTheme = createTheme({
-  palette: {
-    mode: 'light',
-    primary: {
-      main: '#2196f3',
-      light: '#64b5f6',
-      dark: '#1976d2',
-      contrastText: '#fff',
+export default createTheme({
+    palette: {
+        mode: "light",
+        ...brandPalette,
+        accent: { main: "#ff6b6b" },
+        glow: { main: "rgba(80, 227, 194, 0.6)" },
+        background: { default: "#ffffff", paper: "#f7f7f7" }, // old COLORS.light
+        text: { primary: "#000000", secondary: "#444444" },
+        divider: "rgba(0,0,0,0.12)",
+        action: { hover: "rgba(0,0,0,0.04)" },
     },
-    secondary: {
-      main: '#f50057',
-      light: '#ff4081',
-      dark: '#c51162',
-      contrastText: '#fff',
+    typography,
+    components: {
+        ...components,
+        MuiCssBaseline: { styleOverrides: { body: { backgroundImage: "none" } } },
     },
-    background: {
-      default: '#f5f5f5',
-      paper: '#ffffff',
-    },
-    text: {
-      primary: '#212121',
-      secondary: '#757575',
-    },
-  },
-  typography: {
-    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
-    h1: {
-      fontWeight: 500,
-      fontSize: '2.5rem',
-    },
-    h2: {
-      fontWeight: 500,
-      fontSize: '2rem',
-    },
-    h3: {
-      fontWeight: 500,
-      fontSize: '1.75rem',
-    },
-    body1: {
-      fontSize: '1rem',
-      lineHeight: 1.5,
-    },
-  },
-  components: {
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          borderRadius: 8,
-          textTransform: 'none',
-          fontWeight: 500,
-        },
-      },
-    },
-    MuiCard: {
-      styleOverrides: {
-        root: {
-          borderRadius: 12,
-          boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
-        },
-      },
-    },
-  },
 });
-
-export default lightTheme;

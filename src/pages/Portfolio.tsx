@@ -3,7 +3,7 @@ import { Box } from '@mui/material';
 import Header from '../components/Header';
 import ProjectSlider from '../components/ProjectSlider';
 
-const LightPortfolio: React.FC = () => {
+const Portfolio: React.FC = () => {
   return (
     <div className="light-portfolio">
       <Header />
@@ -27,4 +27,4 @@ const LightPortfolio: React.FC = () => {
   );
 };
 
-export default LightPortfolio;
+export default Portfolio;

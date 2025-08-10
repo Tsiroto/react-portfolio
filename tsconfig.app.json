@@ -1,4 +1,5 @@
 {
+  "extends": "./tsconfig.json",
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
     "target": "ES2022",
@@ -23,11 +24,8 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
 
-    /* Custom paths (important for `@/` to work) */
-    "baseUrl": "./src",
-    "paths": {
-      "@/*": ["*"]
-    }
+    /* Env types for Vite */
+    "types": ["vite/client"]
   },
   "include": ["src"]
 }

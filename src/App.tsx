@@ -1,34 +1,38 @@
 import { BrowserRouter as Router, Routes, Route, useNavigate } from "react-router-dom";
-import { ThemeProvider } from "@mui/material";
-import darkTheme from "./theme/darkTheme";
+import ThemeRoot from "@/theme/ThemeRoot";
+import { useThemeStore } from "@/store/themeStore";
 import WelcomeScreen from "./pages/WelcomeScreen";
+import Portfolio from "@/pages/Portfolio";
 
 function RoutedPages() {
     const navigate = useNavigate();
+    const setMode = useThemeStore((s) => s.setMode); // ✅ you were missing this
+
     return (
         <Routes>
             <Route
                 path="/"
                 element={
                     <WelcomeScreen
-                        onModeChange={(mode: "light" | "enhanced") => navigate(`/${mode}`)}
+                        onModeChange={(mode) => {
+                            // UX "enhanced" -> MUI dark theme
+                            setMode(mode === "enhanced" ? "dark" : "light");
+                            navigate("/portfolio");
+                        }}
                     />
                 }
             />
-            <Route path="/light" element={<div>Light Mode Page</div>} />
-            <Route path="/enhanced" element={<div>Enhanced Mode Page</div>} />
+            <Route path="/portfolio" element={<Portfolio />} />
         </Routes>
     );
 }
 
 export default function App() {
     return (
-        <ThemeProvider theme={darkTheme}>
-            {/* If you deploy under a subfolder, uncomment basename */}
-            {/* <Router basename={import.meta.env.BASE_URL}> */}
+        <ThemeRoot>
             <Router>
                 <RoutedPages />
             </Router>
-        </ThemeProvider>
+        </ThemeRoot>
     );
 }

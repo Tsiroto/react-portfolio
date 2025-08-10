@@ -6,10 +6,11 @@ export type DeviceType = "mobile" | "desktop";
 export type InputMethod = "touch" | "keyboard";
 export type Mode = "light" | "enhanced";
 
-// Component interfaces
-export interface AudioVisualizerProps {
-    isActive: boolean;
-}
+// Reusable handler
+export type ModeChangeHandler = (mode: Mode) => void;
+
+// Components
+export interface AudioVisualizerProps { isActive: boolean; }
 
 export interface AudioState {
     isMuted: boolean;
@@ -21,7 +22,7 @@ export interface AudioState {
     setHasInteracted: (value: boolean) => void;
     setSfxVolume: (v: number) => void;
     setBgVolume: (v: number) => void;
-    reset: () => void;
+    resetPrefs: () => void;
 }
 
 export interface AudioToggleOwnProps {
@@ -30,41 +31,35 @@ export interface AudioToggleOwnProps {
     onHover?: () => void;
 }
 
-export interface GlitchTypingTextProps {
-    text: string;
-}
+export interface GlitchTypingTextProps { text: string; }
 
 export interface GlowingPromptProps {
     deviceType: InputMethod;
     onStart: () => void;
 }
 
+// 🔁 Single, shared props for ANY mode selector UI (buttons, popover, etc.)
 export interface ModeSelectorProps {
-    currentMode: Mode;
-    onModeChange: (mode: Mode) => void;
-    visible: boolean;
+    show: boolean;
+    onModeChange: ModeChangeHandler;
+    onHover?: () => void;
+    currentMode?: Mode; // optional, if you ever want to show the selected state
 }
 
 export interface RetroGridProps {
-    opacity?: number;   // 0..1
-    speedSec?: number;  // seconds per loop
-    lineColor?: string; // CSS color string
+    opacity?: number;
+    speedSec?: number;
+    lineColor?: string;
 }
 
 export interface WelcomeLoaderProps {
-    duration?: number; // ms
+    duration?: number;
     onComplete?: () => void;
 }
 
+// WelcomeScreen now uses the same handler name
 export interface WelcomeScreenProps {
-    onModeChange: (mode: Mode) => void;
-}
-
-export interface ModeButtonsProps {
-    show: boolean;
-    onLight: () => void;
-    onEnhanced: () => void;
-    onHover?: () => void;
+    onModeChange: ModeChangeHandler;
 }
 
 export type IntroPhase = "idle" | "loading" | "select";
