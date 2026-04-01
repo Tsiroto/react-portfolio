@@ -1,4 +1,5 @@
 import type { Transition } from "framer-motion";
+import type { Mode } from "@/types/types";
 
 // ⏱ Animation durations (ms)
 export const DURATIONS = {
@@ -14,20 +15,12 @@ export const OPACITY = {
     overlayOut: 0,
 } as const;
 
-export interface TransitionConfig {
-    duration: number;
-    ease?: string;
-    type?: string;
-    stiffness?: number;
-    damping?: number;
-}
-
-// 🔄 Transition presets
-export const TRANSITIONS: Record<"gridFade" | "overlayFade" | "fast", Transition> = {
+// 🔄 Transition presets (properly typed)
+export const TRANSITIONS = {
     gridFade: { duration: 0.6, ease: "easeInOut" },
     overlayFade: { duration: 0.6, ease: "easeInOut" },
-    fast: { type: "spring", stiffness: 300, damping: 24 }
-};
+    fast: { type: "spring", stiffness: 300, damping: 24 },
+} satisfies Record<"gridFade" | "overlayFade" | "fast", Transition>;
 
 // 📍 Fixed UI element positions
 export const POSITIONS = {
@@ -37,13 +30,15 @@ export const POSITIONS = {
 // 🔊 Audio defaults
 export const AUDIO_DEFAULTS = {
     isMuted: false,
-    sfxVolume: 0.60,
-    bgVolume: 0.80,
+    sfxVolume: 0.6,
+    bgVolume: 0.8,
 } as const;
 
-// 🎨 UI defaults
-export const UI_DEFAULTS = {
-    mode: "enhanced" as const,
+// 🌗 Theme defaults (THEME mode only)
+export const DEFAULT_THEME: Mode = "light";
+
+export const UI_DEFAULTS: { mode: Mode } = {
+    mode: DEFAULT_THEME, // "light" | "dark"
 };
 
 // ⚙ Feature toggles
@@ -54,10 +49,7 @@ export const FEATURES = {
 // 📏 UI timing values
 export const POPOVER_MS = 250 as const;
 
-// 🌗 Theme options
-export const DEFAULT_THEME: "dark" | "light" = "dark";
-
-// 📝 UI strings
+// 📝 UI strings (visitor-facing labels)
 export const STRINGS = {
     siteOptions: "Site Options",
     theme: "Theme",

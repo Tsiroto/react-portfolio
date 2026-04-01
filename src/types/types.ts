@@ -1,24 +1,33 @@
 import type { Theme } from "@mui/material/styles";
 import type { SxProps } from "@mui/system";
 
-// Base types
+/** Base */
 export type DeviceType = "mobile" | "desktop";
 export type InputMethod = "touch" | "keyboard";
-export type Mode = "light" | "enhanced";
 
-// Reusable handler
+/** Visitor-facing labels (UI) */
+export type VisitorMode = "light" | "enhanced";
+
+/** Actual MUI theme mode */
+export type Mode = "light" | "dark";
+
+/** Handlers */
+export type VisitorModeChangeHandler = (mode: VisitorMode) => void;
 export type ModeChangeHandler = (mode: Mode) => void;
 
-// Components
+/** Components */
 export interface AudioVisualizerProps { isActive: boolean; }
 
 export interface AudioState {
-    isMuted: boolean;
+    isMuted: boolean;       // music / BGM mute
+    isSfxMuted: boolean;    // effects mute (independent)
     hasInteracted: boolean;
     sfxVolume: number;
     bgVolume: number;
     setMuted: (muted: boolean) => void;
     toggleMuted: () => void;
+    setSfxMuted: (muted: boolean) => void;
+    toggleSfxMuted: () => void;
     setHasInteracted: (value: boolean) => void;
     setSfxVolume: (v: number) => void;
     setBgVolume: (v: number) => void;
@@ -33,18 +42,16 @@ export interface AudioToggleOwnProps {
 
 export interface GlitchTypingTextProps { text: string; }
 
-export interface GlowingPromptProps {
-    deviceType: InputMethod;
-    onStart: () => void;
-}
-
-// 🔁 Single, shared props for ANY mode selector UI (buttons, popover, etc.)
 export interface ModeSelectorProps {
     show: boolean;
-    onModeChange: ModeChangeHandler;
+    onModeChange: VisitorModeChangeHandler;
     onHover?: () => void;
-    currentMode?: Mode; // optional, if you ever want to show the selected state
+    currentMode?: VisitorMode;
+    sx?: SxProps<Theme>;
+    labels?: Partial<Record<VisitorMode, string>>;
 }
+
+export type ModeButtonsProps = ModeSelectorProps;
 
 export interface RetroGridProps {
     opacity?: number;
@@ -57,9 +64,8 @@ export interface WelcomeLoaderProps {
     onComplete?: () => void;
 }
 
-// WelcomeScreen now uses the same handler name
 export interface WelcomeScreenProps {
-    onModeChange: ModeChangeHandler;
+    onModeChange?: ModeChangeHandler;
 }
 
-export type IntroPhase = "idle" | "loading" | "select";
+export type IntroPhase = "idle" | "loading" | "select" | "exiting";

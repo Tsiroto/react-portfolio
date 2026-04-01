@@ -1,6 +1,7 @@
-import { useRef, useCallback } from "react";
+import { useRef, useEffect, useState } from "react";
 import { Box } from "@mui/material";
 import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 import { useAudioStore } from "@/store/audioStore";
 import { useUiStore } from "@/store/uiStore";
@@ -8,129 +9,132 @@ import { useUiStore } from "@/store/uiStore";
 import { useSfx } from "@/hooks/useSfx";
 import { useBgAudio } from "@/hooks/useBgAudio";
 
-import SiteOptions from "@/components/global/SiteOptions";
-import GlitchTypingText from "@/components/welcome/GlitchTypingText";
 import WelcomeLoader from "@/components/welcome/WelcomeLoader";
 import ModeButtons from "@/components/welcome/ModeButtons";
+import StartPrompt from "@/components/welcome/StartPrompt";
 
 import bgm from "@/assets/test-bg-audio.mp3";
-import { DURATIONS, OPACITY, TRANSITIONS, STRINGS } from "@/config/constants";
-import type { Mode, WelcomeScreenProps } from "@/types/types";
+import { DURATIONS, TRANSITIONS, STRINGS } from "@/config/constants";
+import type { Mode, VisitorMode, WelcomeScreenProps } from "@/types/types";
+import { THEME_STORAGE_KEY, visitorToTheme, themeToVisitor } from "@/utils/modeMapping";
 
 export default function WelcomeScreen({ onModeChange }: WelcomeScreenProps) {
+    const navigate = useNavigate();
+
     // Global audio state
     const hasInteracted = useAudioStore((s) => s.hasInteracted);
     const setHasInteracted = useAudioStore((s) => s.setHasInteracted);
     const isMuted = useAudioStore((s) => s.isMuted);
 
-    // Intro phase state
+    // Intro phase state ("idle" | "loading" | "select" | "exiting")
     const introPhase = useUiStore((s) => s.introPhase);
     const setIntroPhase = useUiStore((s) => s.setIntroPhase);
-    const setMode = useUiStore((s) => s.setMode); // keeps local "light|enhanced" if you use it elsewhere
+
+    // Theme mode setter ("light" | "dark")
+    const mode = useUiStore((s) => s.mode);
+    const setMode = useUiStore((s) => s.setMode);
+    const setVisualMode = useUiStore((s) => s.setVisualMode);
+
+    // Background control
+    const showBackground = useUiStore((s) => s.showBackground);
+    const setBackgroundVisible = useUiStore((s) => s.setBackgroundVisible);
 
     // SFX
     const { playClick, playHover } = useSfx();
 
-    // Background visual + audio
-    const gridRef = useRef<HTMLDivElement | null>(null);
+    // Background audio
     useBgAudio({
         started: hasInteracted && introPhase !== "idle",
         isMuted,
         src: bgm,
-        gridRef,
     });
 
+    // Focus container (a11y)
+    const rootRef = useRef<HTMLDivElement | null>(null);
+    useEffect(() => {
+        rootRef.current?.focus();
+    }, []);
+
+    // Show/hide background based on interaction
+    useEffect(() => {
+        setBackgroundVisible(hasInteracted);
+    }, [hasInteracted, setBackgroundVisible]);
+
     // Derived UI flags
-    const showPrompt = !hasInteracted && introPhase === "idle";
+    const isIdle = introPhase === "idle";
     const showLoader = hasInteracted && introPhase === "loading";
     const showModeSelect = hasInteracted && introPhase === "select";
+    const isExiting = introPhase === "exiting";
 
-    // First interaction handler (click, touch, Enter/Space)
-    const begin = useCallback(() => {
-        if (hasInteracted) return;
+    // Click anywhere during idle → start the flow
+    const handleStart = () => {
+        if (!isIdle) return;
         setHasInteracted(true);
-        playClick();
         setIntroPhase("loading");
-    }, [hasInteracted, setHasInteracted, playClick, setIntroPhase]);
-
-    const onKeyDown = useCallback(
-        (e: React.KeyboardEvent) => {
-            if (!showPrompt) return;
-            if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                begin();
-            }
-        },
-        [showPrompt, begin]
-    );
-
-    const handleLoaderComplete = () => {
-        setIntroPhase("select");
     };
 
-    const handleSelectMode = (mode: Mode) => {
+    // Loader completion → go to select
+    const handleLoaderComplete = () => setIntroPhase("select");
+
+    // Navigate after exit animation
+    const [pendingNavigate, setPendingNavigate] = useState(false);
+
+    const handleSelectVisitorMode = (visitorMode: VisitorMode) => {
+        const themeMode: Mode = visitorToTheme(visitorMode);
         playClick();
-        setMode(mode);
-        onModeChange?.(mode);
+
+        try {
+            localStorage.setItem(THEME_STORAGE_KEY, themeMode);
+            localStorage.setItem("portfolio_welcome_seen", "true");
+        } catch {
+            /* ignore */
+        }
+
+        setMode(themeMode);
+        setVisualMode(visitorMode === "enhanced" ? "rich" : "simple");
+        onModeChange?.(themeMode);
+
+        // Set the background type for the portfolio page
+        showBackground(visitorMode === "enhanced" ? "ambient" : "minimal");
+
+        setIntroPhase("exiting");
+        setPendingNavigate(true);
+    };
+
+    const handleExitComplete = () => {
+        if (pendingNavigate) {
+            setPendingNavigate(false);
+            navigate("/home");
+        }
     };
 
     return (
         <Box
+            ref={rootRef}
+            onClick={handleStart}
             sx={{
                 position: "relative",
                 width: "100%",
                 height: "100dvh",
                 overflow: "hidden",
-                bgcolor: (t) => t.palette.background.default,
+                cursor: isIdle ? "pointer" : "default",
             }}
-            onClick={showPrompt ? begin : undefined}
-            onPointerDown={showPrompt ? begin : undefined}
-            onKeyDown={onKeyDown}
-            tabIndex={0} // enable key events
+            tabIndex={0}
+            onKeyDown={(e) => {
+                if (isIdle && (e.key === "Enter" || e.key === " ")) handleStart();
+            }}
             role="application"
             aria-label="Welcome Screen"
         >
-            {/* Background layer (subtle → full) */}
-            <Box
-                ref={gridRef}
-                className="ambient-background"
-                sx={{
-                    position: "absolute",
-                    inset: 0,
-                    zIndex: 0,
-                    opacity: showModeSelect ? OPACITY.bgFull : OPACITY.bgDim,
-                    transition: "opacity 800ms ease",
-                }}
-            />
-
+            {/* === Idle: click-to-start prompt === */}
             <AnimatePresence>
-                {(showPrompt || showLoader) && (
+                {isIdle && (
                     <motion.div
-                        key="black-overlay"
-                        initial={{ opacity: OPACITY.overlayIn }}
-                        animate={{ opacity: showLoader ? 0.35 : 0.7 }}
-                        exit={{ opacity: OPACITY.overlayOut }}
-                        transition={TRANSITIONS.overlayFade}
-                        style={{
-                            position: "absolute",
-                            inset: 0,
-                            background: "black",
-                            zIndex: 1,
-                            pointerEvents: "none",
-                        }}
-                    />
-                )}
-            </AnimatePresence>
-
-            {/* First interaction prompt */}
-            <AnimatePresence>
-                {showPrompt && (
-                    <motion.div
-                        key="prompt"
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -6 }}
-                        transition={TRANSITIONS.fast}
+                        key="start-prompt"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.6 }}
                         style={{
                             position: "absolute",
                             inset: 0,
@@ -139,12 +143,21 @@ export default function WelcomeScreen({ onModeChange }: WelcomeScreenProps) {
                             placeItems: "center",
                         }}
                     >
-                        <GlitchTypingText text={STRINGS.pressEnter} />
+                        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+                            <StartPrompt visible text={STRINGS.pressEnter} />
+                            <motion.div
+                                animate={{ opacity: [0.4, 1, 0.4] }}
+                                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                                style={{ color: "rgba(0,214,252,0.5)", fontSize: "0.75rem", letterSpacing: "0.2em", textTransform: "uppercase" }}
+                            >
+                                click anywhere
+                            </motion.div>
+                        </Box>
                     </motion.div>
                 )}
             </AnimatePresence>
 
-            {/* Loader */}
+            {/* === Loader === */}
             <AnimatePresence>
                 {showLoader && (
                     <motion.div
@@ -169,7 +182,7 @@ export default function WelcomeScreen({ onModeChange }: WelcomeScreenProps) {
                 )}
             </AnimatePresence>
 
-            {/* Mode selection + options */}
+            {/* === Mode selection === */}
             <AnimatePresence>
                 {showModeSelect && (
                     <motion.div
@@ -179,6 +192,7 @@ export default function WelcomeScreen({ onModeChange }: WelcomeScreenProps) {
                         exit={{ opacity: 0, y: -8 }}
                         transition={TRANSITIONS.fast}
                         style={{ position: "absolute", inset: 0, zIndex: 4 }}
+                        onClick={(e) => e.stopPropagation()}
                     >
                         <Box
                             sx={{
@@ -188,15 +202,49 @@ export default function WelcomeScreen({ onModeChange }: WelcomeScreenProps) {
                                 p: 2,
                             }}
                         >
-                            <ModeButtons
-                                show
-                                onModeChange={handleSelectMode}
-                                onHover={playHover}
-                            />
+                            <Box sx={{ textAlign: "center" }}>
+                                <motion.p
+                                    initial={{ opacity: 0, y: -10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.2 }}
+                                    style={{
+                                        color: "rgba(0,214,252,0.7)",
+                                        fontSize: "0.8rem",
+                                        letterSpacing: "0.25em",
+                                        textTransform: "uppercase",
+                                        marginBottom: "2rem",
+                                    }}
+                                >
+                                    Choose your experience
+                                </motion.p>
+                                <ModeButtons
+                                    show
+                                    onModeChange={handleSelectVisitorMode}
+                                    onHover={playHover}
+                                    currentMode={themeToVisitor(mode)}
+                                />
+                            </Box>
                         </Box>
-
-                        <SiteOptions />
                     </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* === Exit animation wrapper === */}
+            <AnimatePresence>
+                {isExiting && (
+                    <motion.div
+                        key="exit"
+                        initial={{ opacity: 1, scale: 1 }}
+                        animate={{ opacity: 0, scale: 0.98 }}
+                        transition={{ duration: 0.5, ease: "easeInOut" }}
+                        onAnimationComplete={handleExitComplete}
+                        style={{
+                            position: "absolute",
+                            inset: 0,
+                            zIndex: 5,
+                            pointerEvents: "none",
+                        }}
+                    />
                 )}
             </AnimatePresence>
         </Box>

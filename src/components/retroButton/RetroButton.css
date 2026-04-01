@@ -1,0 +1,46 @@
+.retro-nirvana-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.8rem 1.5rem;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.1rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #fff;
+    background: linear-gradient(145deg, #1c1c1c, #101010);
+    border: 2px solid transparent;
+    border-image: linear-gradient(90deg, #ff00f0, #00f0ff) 1;
+    cursor: pointer;
+    transition: all 0.25s ease-in-out;
+    box-shadow: 0 0 6px rgba(255, 0, 240, 0.6),
+    0 0 15px rgba(0, 240, 255, 0.4);
+}
+
+.retro-nirvana-btn::before,
+.retro-nirvana-btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 2px double transparent;
+    border-image: linear-gradient(90deg, #ff00f0, #00f0ff) 1;
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.retro-nirvana-btn:hover {
+    transform: translateY(-2px) scale(1.03);
+    box-shadow: 0 0 12px rgba(255, 0, 240, 0.9),
+    0 0 24px rgba(0, 240, 255, 0.7);
+}
+
+.retro-nirvana-btn:active {
+    transform: scale(0.98);
+}
+
+.retro-nirvana-btn.selected {
+    background: linear-gradient(145deg, #ff00f0, #00f0ff);
+    color: #000;
+    font-weight: bold;
+}

@@ -18,20 +18,28 @@ export const brandPalette: Pick<PaletteOption, "primary" | "secondary"> = {
     secondary: { main: "#ff4081" },
 };
 
+const heading = `'Space Grotesk', sans-serif`;
+const body = `'Inter', sans-serif`;
+
 export const typography: TypographyOption = {
-    fontFamily: `'Roboto', 'Helvetica', 'Arial', sans-serif`,
-    h1: { fontSize: "4rem", fontWeight: 700, letterSpacing: "-1px" },
-    h2: { fontSize: "3rem", fontWeight: 600 },
-    h3: { fontSize: "2rem", fontWeight: 500 },
-    body1: { fontSize: "1.125rem" },
-    button: { textTransform: "none", fontWeight: 500 },
+    fontFamily: body,
+    h1: { fontFamily: heading, fontWeight: 800, letterSpacing: "-0.03em" },
+    h2: { fontFamily: heading, fontWeight: 800, letterSpacing: "-0.02em" },
+    h3: { fontFamily: heading, fontWeight: 700, letterSpacing: "-0.01em" },
+    h4: { fontFamily: heading, fontWeight: 700 },
+    h5: { fontFamily: heading, fontWeight: 600 },
+    h6: { fontFamily: heading, fontWeight: 600 },
+    overline: { fontFamily: body, fontWeight: 600 },
+    body1: { fontFamily: body, fontSize: "1rem" },
+    body2: { fontFamily: body, fontSize: "0.875rem" },
+    button: { fontFamily: body, textTransform: "none", fontWeight: 600 },
 };
 
 export const components: ComponentsOption = {
     MuiButton: {
         styleOverrides: {
             root: {
-                borderRadius: "2rem",
+                // borderRadius: "2rem",
                 padding: "1rem 1.25rem",
                 fontSize: "1rem",
                 transition: "all 0.3s ease",

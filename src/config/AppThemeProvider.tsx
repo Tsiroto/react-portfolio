@@ -5,8 +5,8 @@ import lightTheme from "@/theme/lightTheme";
 import { useUiStore } from "@/store/uiStore";
 
 export default function AppThemeProvider({ children }: { children: React.ReactNode }) {
-    const mode = useUiStore((s) => s.mode); // "light" | "enhanced"
-    const theme = mode === "enhanced" ? darkTheme : lightTheme;
+    const mode = useUiStore((s) => s.mode);
+    const theme = mode === "dark" ? darkTheme : lightTheme;
 
     // expose a data-theme for CSS files
     useEffect(() => {

@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap');
+
 html,
 body,
 #root {
@@ -5,13 +7,18 @@ body,
     padding: 0;
     min-height: 100%;
     min-width: 100%;
-    overflow: hidden;
     background-color: #0d0d0f;
-    font-family: 'Roboto', sans-serif;
+    font-family: 'Inter', sans-serif;
 }
 
 html {
     scroll-behavior: smooth;
+    overflow-y: auto !important;
+}
+
+body {
+    overflow-x: hidden;
+    overflow-y: auto !important;
 }
 
 * {
@@ -31,4 +38,43 @@ body {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
+}
+
+/* ── Scrollbar theming ── */
+:root {
+    --scrollbar-thumb: rgba(0, 0, 0, 0.18);
+    --scrollbar-thumb-hover: rgba(0, 0, 0, 0.32);
+    --scrollbar-track: rgba(0, 0, 0, 0.04);
+}
+
+[data-mode="dark"] {
+    --scrollbar-thumb: rgba(0, 214, 252, 0.2);
+    --scrollbar-thumb-hover: rgba(0, 214, 252, 0.45);
+    --scrollbar-track: rgba(255, 255, 255, 0.03);
+}
+
+/* Webkit (Chrome, Edge, Safari) */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 3px;
+    transition: background 0.2s;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
+}
+
+/* Firefox */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
 }

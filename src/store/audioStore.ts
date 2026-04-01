@@ -16,12 +16,15 @@ export const useAudioStore = create<AudioState>()(
     persist(
         (set, get) => ({
             isMuted: AUDIO_DEFAULTS.isMuted,
+            isSfxMuted: false,
             hasInteracted: false,
             sfxVolume: AUDIO_DEFAULTS.sfxVolume,
             bgVolume: AUDIO_DEFAULTS.bgVolume,
 
             setMuted: (muted) => set({ isMuted: muted }),
             toggleMuted: () => set({ isMuted: !get().isMuted }),
+            setSfxMuted: (muted) => set({ isSfxMuted: muted }),
+            toggleSfxMuted: () => set({ isSfxMuted: !get().isSfxMuted }),
             setHasInteracted: (value) => set({ hasInteracted: value }),
 
             setSfxVolume: (v) => set({ sfxVolume: clamp01(v) }),
@@ -30,6 +33,7 @@ export const useAudioStore = create<AudioState>()(
             resetPrefs: () =>
                 set({
                     isMuted: AUDIO_DEFAULTS.isMuted,
+                    isSfxMuted: false,
                     sfxVolume: AUDIO_DEFAULTS.sfxVolume,
                     bgVolume: AUDIO_DEFAULTS.bgVolume,
                 }),
@@ -42,6 +46,7 @@ export const useAudioStore = create<AudioState>()(
             // Persist only user prefs (and not hasInteracted)
             partialize: (state): Partial<AudioState> => ({
                 isMuted: state.isMuted,
+                isSfxMuted: state.isSfxMuted,
                 sfxVolume: state.sfxVolume,
                 bgVolume: state.bgVolume,
             }),
