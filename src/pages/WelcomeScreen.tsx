@@ -1,7 +1,6 @@
 import { useRef, useEffect, useState } from "react";
 import { Box } from "@mui/material";
 import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate } from "react-router-dom";
 
 import { useAudioStore } from "@/store/audioStore";
 import { useUiStore } from "@/store/uiStore";
@@ -17,9 +16,9 @@ import bgm from "@/assets/test-bg-audio.mp3";
 import { DURATIONS, TRANSITIONS, STRINGS } from "@/config/constants";
 import type { Mode, VisitorMode, WelcomeScreenProps } from "@/types/types";
 import { THEME_STORAGE_KEY, visitorToTheme, themeToVisitor } from "@/utils/modeMapping";
+import { unlockAudioContext } from "@/utils/audioContext";
 
-export default function WelcomeScreen({ onModeChange }: WelcomeScreenProps) {
-    const navigate = useNavigate();
+export default function WelcomeScreen({ onModeChange, onDone }: WelcomeScreenProps) {
 
     // Global audio state
     const hasInteracted = useAudioStore((s) => s.hasInteracted);
@@ -40,10 +39,10 @@ export default function WelcomeScreen({ onModeChange }: WelcomeScreenProps) {
     const setBackgroundVisible = useUiStore((s) => s.setBackgroundVisible);
 
     // SFX
-    const { playClick, playHover } = useSfx();
+    const { playAccept, playHover } = useSfx();
 
     // Background audio
-    useBgAudio({
+    const { fadeOut: fadeBgm } = useBgAudio({
         started: hasInteracted && introPhase !== "idle",
         isMuted,
         src: bgm,
@@ -69,6 +68,7 @@ export default function WelcomeScreen({ onModeChange }: WelcomeScreenProps) {
     // Click anywhere during idle → start the flow
     const handleStart = () => {
         if (!isIdle) return;
+        unlockAudioContext(); // must be synchronous within the gesture
         setHasInteracted(true);
         setIntroPhase("loading");
     };
@@ -81,7 +81,7 @@ export default function WelcomeScreen({ onModeChange }: WelcomeScreenProps) {
 
     const handleSelectVisitorMode = (visitorMode: VisitorMode) => {
         const themeMode: Mode = visitorToTheme(visitorMode);
-        playClick();
+        playAccept();
 
         try {
             localStorage.setItem(THEME_STORAGE_KEY, themeMode);
@@ -94,9 +94,9 @@ export default function WelcomeScreen({ onModeChange }: WelcomeScreenProps) {
         setVisualMode(visitorMode === "enhanced" ? "rich" : "simple");
         onModeChange?.(themeMode);
 
-        // Set the background type for the portfolio page
         showBackground(visitorMode === "enhanced" ? "ambient" : "minimal");
 
+        fadeBgm(1000); // fade welcome music over 1s
         setIntroPhase("exiting");
         setPendingNavigate(true);
     };
@@ -104,7 +104,7 @@ export default function WelcomeScreen({ onModeChange }: WelcomeScreenProps) {
     const handleExitComplete = () => {
         if (pendingNavigate) {
             setPendingNavigate(false);
-            navigate("/home");
+            onDone();
         }
     };
 
@@ -236,7 +236,7 @@ export default function WelcomeScreen({ onModeChange }: WelcomeScreenProps) {
                         key="exit"
                         initial={{ opacity: 1, scale: 1 }}
                         animate={{ opacity: 0, scale: 0.98 }}
-                        transition={{ duration: 0.5, ease: "easeInOut" }}
+                        transition={{ duration: 1.0, ease: "easeInOut" }}
                         onAnimationComplete={handleExitComplete}
                         style={{
                             position: "absolute",

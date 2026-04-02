@@ -4,11 +4,15 @@ import { useTheme } from "@mui/material/styles";
 import { FiArrowLeft, FiArrowRight, FiExternalLink } from "react-icons/fi";
 import gsap from "gsap";
 import { projects } from "@/data/projects";
+import { useUiStore } from "@/store/uiStore";
+import { useSfx } from "@/hooks/useSfx";
 
 export default function HomeProjectSlider() {
     const theme = useTheme();
     const isEnhanced = theme.palette.mode === "dark";
+    const isRich = useUiStore((s) => s.visualMode === "rich");
 
+    const { playSwipe } = useSfx();
     const [current, setCurrent] = useState(0);
     const currentRef = useRef(0);
     const isAnimatingRef = useRef(false);
@@ -62,8 +66,8 @@ export default function HomeProjectSlider() {
         }
     };
 
-    const prev = () => goTo((currentRef.current - 1 + projects.length) % projects.length);
-    const next = () => goTo((currentRef.current + 1) % projects.length);
+    const prev = () => { playSwipe(); goTo((currentRef.current - 1 + projects.length) % projects.length); };
+    const next = () => { playSwipe(); goTo((currentRef.current + 1) % projects.length); };
 
     useEffect(() => {
         const handleKey = (e: KeyboardEvent) => {
@@ -75,14 +79,15 @@ export default function HomeProjectSlider() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // Autoplay
+    // Autoplay — rich mode only
     useEffect(() => {
+        if (!isRich) return;
         const id = window.setInterval(() => {
-            next();
+            goTo((currentRef.current + 1) % projects.length);
         }, 3000);
         return () => clearInterval(id);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [isRich]);
 
     const accentColor = isEnhanced ? "#00d6fc" : theme.palette.primary.main;
 
@@ -93,9 +98,9 @@ export default function HomeProjectSlider() {
                 sx={{
                     position: "relative",
                     width: "100%",
-                    height: { xs: 420, sm: 480, md: 520 },
+                    height: { xs: 340, sm: 420, md: 520 },
                     overflow: "hidden",
-                    borderRadius: 2,
+                    borderRadius: "12px",
                     ...(isEnhanced && {
                         border: "1px solid rgba(0,214,252,0.12)",
                         boxShadow: "0 0 40px rgba(0,0,0,0.6)",
@@ -146,7 +151,7 @@ export default function HomeProjectSlider() {
 
                         <Box
                             ref={(el) => { contentRefs.current[i] = el as HTMLDivElement | null; }}
-                            sx={{ maxWidth: 560, px: { xs: 4, md: 8 }, position: "relative", zIndex: 1 }}
+                            sx={{ maxWidth: 560, width: "100%", px: { xs: 3, sm: 4, md: 8 }, position: "relative", zIndex: 1 }}
                         >
                             <Typography
                                 variant="overline"
@@ -168,7 +173,7 @@ export default function HomeProjectSlider() {
                                 sx={{
                                     fontWeight: 800,
                                     color: project.textColor,
-                                    fontSize: { xs: "1.6rem", sm: "2rem", md: "2.6rem" },
+                                    fontSize: { xs: "1.35rem", sm: "2rem", md: "2.6rem" },
                                     lineHeight: 1.1,
                                     mb: 1,
                                     ...(isEnhanced && {
@@ -200,6 +205,7 @@ export default function HomeProjectSlider() {
                                     mb: 3,
                                     maxWidth: 460,
                                     fontSize: "0.9rem",
+                                    display: { xs: "none", sm: "block" },
                                 }}
                             >
                                 {project.description}
@@ -298,7 +304,7 @@ export default function HomeProjectSlider() {
                 {projects.map((project, i) => (
                     <Box
                         key={project.id}
-                        onClick={() => goTo(i)}
+                        onClick={() => { playSwipe(); goTo(i); }}
                         sx={{ flexShrink: 0, width: { xs: 100, sm: 120 }, cursor: "pointer" }}
                     >
                         <Box

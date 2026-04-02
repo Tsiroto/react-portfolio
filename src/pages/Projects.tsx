@@ -6,7 +6,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@mui/material/styles";
 import { FiExternalLink } from "react-icons/fi";
-import { projects, filterOptions } from "@/data/projects";
+import { projects, filterOptions, contributions, devProjects } from "@/data/projects";
 import type { Project } from "@/data/projects";
 
 type FilterState = {
@@ -31,8 +31,6 @@ function matchesFilters(project: Project, active: FilterState): boolean {
 
 const filterGroups: { key: keyof FilterState; label: string }[] = [
     { key: "framework", label: "Framework" },
-    { key: "stack", label: "Tech Stack" },
-    { key: "features", label: "Features" },
 ];
 
 export default function Projects() {
@@ -79,6 +77,7 @@ export default function Projects() {
                             fontWeight: 900,
                             mt: 0.5,
                             mb: 1,
+                            fontSize: { xs: "2.2rem", sm: "3rem", md: "3.75rem" },
                             ...(isEnhanced && { textShadow: "0 0 20px rgba(0,188,212,0.3)" }),
                         }}
                     >
@@ -99,7 +98,7 @@ export default function Projects() {
                         sx={{
                             mb: 5,
                             p: 2.5,
-                            borderRadius: 2,
+                            borderRadius: "12px",
                             border: sectionBorder,
                             bgcolor: isEnhanced ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.02)",
                         }}
@@ -211,7 +210,7 @@ export default function Projects() {
                                         height: "100%",
                                         display: "flex",
                                         flexDirection: "column",
-                                        borderRadius: 3,
+                                        borderRadius: "12px",
                                         overflow: "hidden",
                                         border: sectionBorder,
                                         bgcolor: isEnhanced
@@ -344,6 +343,149 @@ export default function Projects() {
                         </Button>
                     </Box>
                 )}
+
+                {/* Contributions */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: 0.3 }}
+                >
+                    <Box
+                        sx={{
+                            mt: 10,
+                            pt: 6,
+                            borderTop: sectionBorder,
+                        }}
+                    >
+                        <Typography
+                            variant="overline"
+                            sx={{ color: "primary.main", letterSpacing: "0.3em", fontSize: "0.75rem", fontWeight: 600 }}
+                        >
+                            Also
+                        </Typography>
+                        <Typography
+                            variant="h4"
+                            sx={{
+                                fontWeight: 800,
+                                mt: 0.5,
+                                mb: 1,
+                                fontSize: { xs: "1.6rem", sm: "2rem" },
+                                ...(isEnhanced && { textShadow: "0 0 20px rgba(0,188,212,0.3)" }),
+                            }}
+                        >
+                            Other Contributions
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: "text.secondary", mb: 4, maxWidth: 480, lineHeight: 1.7 }}>
+                            Sites I've contributed to with hosting, SEO optimisation, management, debugging, and ongoing improvements.
+                        </Typography>
+
+                        <Stack direction="row" flexWrap="wrap" gap={{ xs: 2, sm: 3 }}>
+                            {contributions.map((url) => (
+                                <Typography
+                                    key={url}
+                                    variant="body2"
+                                    sx={{
+                                        fontFamily: "monospace",
+                                        fontSize: { xs: "0.82rem", sm: "0.9rem" },
+                                        color: isEnhanced ? "rgba(255,255,255,0.45)" : "text.secondary",
+                                        letterSpacing: "0.02em",
+                                    }}
+                                >
+                                    {url}
+                                </Typography>
+                            ))}
+                        </Stack>
+                    </Box>
+                </motion.div>
+
+                {/* Development */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: 0.4 }}
+                >
+                    <Box sx={{ mt: 8, pt: 6, borderTop: sectionBorder }}>
+                        <Typography
+                            variant="overline"
+                            sx={{ color: "primary.main", letterSpacing: "0.3em", fontSize: "0.75rem", fontWeight: 600 }}
+                        >
+                            Training & Personal
+                        </Typography>
+                        <Typography
+                            variant="h4"
+                            sx={{
+                                fontWeight: 800,
+                                mt: 0.5,
+                                mb: 1,
+                                fontSize: { xs: "1.6rem", sm: "2rem" },
+                                ...(isEnhanced && { textShadow: "0 0 20px rgba(0,188,212,0.3)" }),
+                            }}
+                        >
+                            Development
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: "text.secondary", mb: 4, maxWidth: 480, lineHeight: 1.7 }}>
+                            React projects built while training — live and deployed.
+                        </Typography>
+
+                        <Box
+                            sx={{
+                                display: "grid",
+                                gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)" },
+                                gap: 3,
+                            }}
+                        >
+                            {devProjects.map((project) => (
+                                <Box
+                                    key={project.id}
+                                    component="a"
+                                    href={project.link}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    sx={{
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        gap: 1.5,
+                                        p: 3,
+                                        borderRadius: "12px",
+                                        border: sectionBorder,
+                                        bgcolor: isEnhanced ? "rgba(255,255,255,0.02)" : "background.paper",
+                                        textDecoration: "none",
+                                        transition: "border-color 0.2s, box-shadow 0.2s",
+                                        "&:hover": {
+                                            borderColor: isEnhanced ? "rgba(0,214,252,0.4)" : accentColor,
+                                            boxShadow: isEnhanced ? "0 0 20px rgba(0,214,252,0.08)" : "none",
+                                        },
+                                    }}
+                                >
+                                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                                        <Typography variant="h6" sx={{ fontWeight: 700, color: "text.primary" }}>
+                                            {project.title}
+                                        </Typography>
+                                        <FiExternalLink size={15} color={isEnhanced ? "rgba(0,214,252,0.5)" : undefined} />
+                                    </Box>
+                                    <Typography variant="body2" sx={{ color: "text.secondary", lineHeight: 1.7 }}>
+                                        {project.description}
+                                    </Typography>
+                                    <Stack direction="row" flexWrap="wrap" gap={0.75}>
+                                        {project.tags.map((tag) => (
+                                            <Chip
+                                                key={tag}
+                                                label={tag}
+                                                size="small"
+                                                sx={{
+                                                    bgcolor: isEnhanced ? "rgba(0,214,252,0.07)" : "action.hover",
+                                                    color: isEnhanced ? "#00d6fc" : "text.secondary",
+                                                    border: isEnhanced ? "1px solid rgba(0,214,252,0.2)" : `1px solid ${sectionBorder}`,
+                                                    fontSize: "0.7rem",
+                                                }}
+                                            />
+                                        ))}
+                                    </Stack>
+                                </Box>
+                            ))}
+                        </Box>
+                    </Box>
+                </motion.div>
             </Container>
         </Box>
     );

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { useAudioStore } from "@/store/audioStore";
 
 export function useBgAudio(params: {
@@ -13,9 +13,8 @@ export function useBgAudio(params: {
     const bgVolume = useAudioStore((s) => s.bgVolume);
 
     const audioRef = useRef<HTMLAudioElement | null>(null);
-    const audioGraphMadeRef = useRef(false);
-    const ctxRef = useRef<AudioContext | null>(null);
     const analyserRef = useRef<AnalyserNode | null>(null);
+    const fadeRafRef = useRef<number | null>(null);
 
     const latest = useRef({ isMuted, bgVolume, overrideVolume });
 
@@ -42,59 +41,37 @@ export function useBgAudio(params: {
         const a = new Audio(src);
         a.loop = true;
         a.preload = "auto";
-        a.crossOrigin = "anonymous";
         a.volume = latestVolume(latest.current);
         a.play().catch(() => {});
         audioRef.current = a;
 
         return () => {
+            if (fadeRafRef.current) cancelAnimationFrame(fadeRafRef.current);
             a.pause();
             a.src = "";
             if (audioRef.current === a) audioRef.current = null;
         };
     }, [started, hasInteracted, src]);
 
-    // Build analyser graph — kept for audio-reactive visuals
-    useEffect(() => {
-        const audioEl = audioRef.current;
-        if (!started || !audioEl || audioGraphMadeRef.current) return;
-
-        const AudioContextCtor =
-            window.AudioContext ||
-            (window as unknown as { webkitAudioContext?: typeof AudioContext })
-                .webkitAudioContext;
-
-        if (!AudioContextCtor) return;
-
-        let ctx: AudioContext | null = null;
-        let analyser: AnalyserNode | null = null;
-
-        try {
-            ctx = new AudioContextCtor();
-            if (ctx.state === "suspended") ctx.resume().catch(() => {});
-            const source = ctx.createMediaElementSource(audioEl);
-            analyser = ctx.createAnalyser();
-            analyser.fftSize = 256;
-            source.connect(analyser);
-            analyser.connect(ctx.destination);
-        } catch {
-            return;
-        }
-
-        ctxRef.current = ctx;
-        analyserRef.current = analyser;
-        audioGraphMadeRef.current = true;
-
-        return () => {
-            analyser?.disconnect();
-            ctx?.close().catch(() => {});
-            analyserRef.current = null;
-            ctxRef.current = null;
-            audioGraphMadeRef.current = false;
+    // Fade volume to 0 over `ms` milliseconds
+    const fadeOut = useCallback((ms: number) => {
+        const a = audioRef.current;
+        if (!a) return;
+        if (fadeRafRef.current) cancelAnimationFrame(fadeRafRef.current);
+        const startVol = a.volume;
+        const startTime = performance.now();
+        const tick = () => {
+            const elapsed = performance.now() - startTime;
+            const progress = Math.min(elapsed / ms, 1);
+            a.volume = startVol * (1 - progress);
+            if (progress < 1) {
+                fadeRafRef.current = requestAnimationFrame(tick);
+            }
         };
-    }, [started, src]);
+        fadeRafRef.current = requestAnimationFrame(tick);
+    }, []);
 
-    return { audioRef, analyserRef };
+    return { audioRef, analyserRef, fadeOut };
 }
 
 function clamp01(v: number | undefined) {

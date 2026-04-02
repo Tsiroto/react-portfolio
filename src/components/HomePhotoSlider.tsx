@@ -42,10 +42,10 @@ export default function HomePhotoSlider() {
             sx={{
                 position: "relative",
                 width: "100%",
-                maxWidth: 480,
+                maxWidth: { xs: "100%", sm: 480 },
                 mx: "auto",
                 aspectRatio: "9/16",
-                maxHeight: 540,
+                maxHeight: { xs: 420, sm: 540 },
                 borderRadius: 1,
                 overflow: "hidden",
                 border: "1px solid",

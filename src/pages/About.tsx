@@ -84,7 +84,7 @@ export default function About() {
                         variant="body1"
                         sx={{ color: "text.secondary", lineHeight: 1.85, fontSize: "1.05rem", mb: 6 }}
                     >
-                        Right now, I'm focused on improving my React skills while continuing to build and refine real-world projects. I aim to create fast, reliable, and well-structured applications that deliver a solid user experience.
+                        Right now, I'm focused on improving my React skills while continuing to build and refine real-world projects.
                     </Typography>
 
                     {/* Skills */}

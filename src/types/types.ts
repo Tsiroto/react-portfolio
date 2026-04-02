@@ -66,6 +66,7 @@ export interface WelcomeLoaderProps {
 
 export interface WelcomeScreenProps {
     onModeChange?: ModeChangeHandler;
+    onDone: () => void;
 }
 
 export type IntroPhase = "idle" | "loading" | "select" | "exiting";

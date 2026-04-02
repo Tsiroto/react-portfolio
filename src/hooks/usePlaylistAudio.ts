@@ -3,21 +3,11 @@ import { useAudioStore } from "@/store/audioStore";
 import { usePlaylistStore } from "@/store/playlistStore";
 import { useUiStore } from "@/store/uiStore";
 import { playlist } from "@/data/playlist";
+import { getOrCreateAudioContext } from "@/utils/audioContext";
 
 // Shared analyser — any component can read frequency data from this
 export const playlistAnalyserRef: { current: AnalyserNode | null } = { current: null };
-let _audioCtx: AudioContext | null = null;
 
-/**
- * Manages the audio element for the playlist.
- *
- * - Rich/enhanced mode: autoplays when `hasInteracted` is true
- * - Simple/light mode: waits for user action
- * - Pauses (and remembers state) when music is muted; resumes on unmute
- *   only if it was playing before mute
- * - Single-track playlists loop by restarting the same element
- * - Multi-track playlists advance on track end (last → first loops back)
- */
 export function usePlaylistAudio() {
     const hasInteracted = useAudioStore((s) => s.hasInteracted);
     const isMuted = useAudioStore((s) => s.isMuted);
@@ -36,6 +26,8 @@ export function usePlaylistAudio() {
     const registerSeek = usePlaylistStore((s) => s.registerSeek);
 
     const audioRef = useRef<HTMLAudioElement | null>(null);
+    const gainRef = useRef<GainNode | null>(null);
+    const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
 
     // Refs so effects can read latest values without being re-triggered
     const isPlayingRef = useRef(isPlaying);
@@ -50,11 +42,11 @@ export function usePlaylistAudio() {
     // Whether music was playing before the last mute — used to resume on unmute
     const wasPlayingBeforeMuteRef = useRef(false);
 
-    // Auto-start in rich/enhanced mode once the user has interacted
+    // Auto-start in rich/enhanced mode — delayed 2s to leave space after welcome music fades
     useEffect(() => {
-        if (isRich && hasInteracted) {
-            setIsPlaying(true);
-        }
+        if (!isRich || !hasInteracted) return;
+        const t = window.setTimeout(() => setIsPlaying(true), 1000);
+        return () => clearTimeout(t);
     }, [isRich, hasInteracted, setIsPlaying]);
 
     // Pause when muted, resume when unmuted (if it was playing before)
@@ -77,15 +69,12 @@ export function usePlaylistAudio() {
         const track = playlist[currentIndex];
         const audio = new Audio(track.src);
         audio.preload = "auto";
-        audio.volume = isMutedRef.current ? 0 : bgVolumeRef.current;
+        // Keep audio.volume at 1 — volume is controlled via GainNode (works on iOS)
+        audio.volume = 1;
 
         const handleTimeUpdate = () => setCurrentTime(audio.currentTime);
         const handleLoadedMetadata = () => setDuration(audio.duration);
-
-        const handleEnded = () => {
-            // Advance to next track; wraps back to 0 after the last track
-            nextTrack();
-        };
+        const handleEnded = () => { nextTrack(); };
 
         audio.addEventListener("timeupdate", handleTimeUpdate);
         audio.addEventListener("loadedmetadata", handleLoadedMetadata);
@@ -93,21 +82,26 @@ export function usePlaylistAudio() {
 
         audioRef.current = audio;
 
-        // Build / reuse AudioContext and attach analyser to this element
+        // Build Web Audio graph: source → gain → analyser → destination
+        // GainNode controls volume on all platforms including iOS (unlike audio.volume)
         try {
-            const AudioContextCtor =
-                window.AudioContext ||
-                (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-            if (AudioContextCtor) {
-                if (!_audioCtx || _audioCtx.state === "closed") {
-                    _audioCtx = new AudioContextCtor();
-                }
-                if (_audioCtx.state === "suspended") _audioCtx.resume().catch(() => {});
-                const source = _audioCtx.createMediaElementSource(audio);
-                const analyser = _audioCtx.createAnalyser();
+            const ctx = getOrCreateAudioContext();
+            if (ctx) {
+                if (ctx.state === "suspended") ctx.resume().catch(() => {});
+
+                const source = ctx.createMediaElementSource(audio);
+                const gain = ctx.createGain();
+                const analyser = ctx.createAnalyser();
                 analyser.fftSize = 256;
-                source.connect(analyser);
-                analyser.connect(_audioCtx.destination);
+
+                gain.gain.value = isMutedRef.current ? 0 : bgVolumeRef.current;
+
+                source.connect(gain);
+                gain.connect(analyser);
+                analyser.connect(ctx.destination);
+
+                sourceRef.current = source;
+                gainRef.current = gain;
                 playlistAnalyserRef.current = analyser;
             }
         } catch {
@@ -124,7 +118,13 @@ export function usePlaylistAudio() {
             audio.removeEventListener("timeupdate", handleTimeUpdate);
             audio.removeEventListener("loadedmetadata", handleLoadedMetadata);
             audio.removeEventListener("ended", handleEnded);
+            // Disconnect all nodes so the AudioContext is clean for next track
+            sourceRef.current?.disconnect();
+            gainRef.current?.disconnect();
+            playlistAnalyserRef.current?.disconnect();
             if (audioRef.current === audio) audioRef.current = null;
+            sourceRef.current = null;
+            gainRef.current = null;
             playlistAnalyserRef.current = null;
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -141,9 +141,6 @@ export function usePlaylistAudio() {
 
     // Sync play / pause
     useEffect(() => {
-        // User hit play on a direct URL — mark interaction so the audio
-        // creation effect re-runs (it depends on hasInteracted) and the
-        // new element starts playing because isPlayingRef is already true.
         if (isPlaying && !hasInteracted) {
             setHasInteracted(true);
             return;
@@ -157,9 +154,13 @@ export function usePlaylistAudio() {
         }
     }, [isPlaying, hasInteracted, setHasInteracted]);
 
-    // Sync volume live (never recreates the audio element)
+    // Sync volume via GainNode (works on iOS) with audio.volume as fallback
     useEffect(() => {
-        if (!audioRef.current) return;
-        audioRef.current.volume = isMuted ? 0 : bgVolume;
+        const level = isMuted ? 0 : bgVolume;
+        if (gainRef.current) {
+            gainRef.current.gain.value = level;
+        } else if (audioRef.current) {
+            audioRef.current.volume = level;
+        }
     }, [isMuted, bgVolume]);
 }

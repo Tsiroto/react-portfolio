@@ -2,15 +2,21 @@ import { Box, Typography, Container, Button, Grid } from "@mui/material";
 import { motion } from "framer-motion";
 import { useTheme } from "@mui/material/styles";
 import { Link } from "react-router-dom";
+import { useSfx } from "@/hooks/useSfx";
 import { FiChevronDown } from "react-icons/fi";
 import HomeProjectSlider from "@/components/HomeProjectSlider";
 import HomePhotoSlider from "@/components/HomePhotoSlider";
 import HeroParticles from "@/components/HeroParticles";
+import ContributionsMarquee from "@/components/ContributionsMarquee";
+import { devProjects } from "@/data/projects";
+import { FiExternalLink } from "react-icons/fi";
+import { Chip, Stack } from "@mui/material";
 
 export default function Home() {
     const theme = useTheme();
     const isEnhanced = theme.palette.mode === "dark";
 
+    const { playHover, playClick } = useSfx();
     const sectionBg = isEnhanced ? "rgba(5,5,5,0.75)" : theme.palette.background.paper;
     const sectionBorder = isEnhanced
         ? "1px solid rgba(0,214,252,0.1)"
@@ -49,7 +55,7 @@ export default function Home() {
 
                 <Box sx={{
                     maxWidth: 720,
-                    borderRadius: 2,
+                    borderRadius: "12px",
                     p: 2,
                     position: "relative",
                     zIndex: 1,
@@ -83,7 +89,7 @@ export default function Home() {
                             variant="h1"
                             sx={{
                                 fontWeight: 900,
-                                fontSize: { xs: "2.6rem", sm: "3.5rem", md: "5rem" },
+                                fontSize: { xs: "2rem", sm: "3.2rem", md: "5rem" },
                                 lineHeight: 1.05,
                                 letterSpacing: "-0.02em",
                                 color: "text.primary",
@@ -220,6 +226,8 @@ export default function Home() {
                                 to="/projects"
                                 variant="contained"
                                 size="large"
+                                onMouseEnter={playHover}
+                                onClick={playClick}
                                 sx={{
                                     px: 5,
                                     fontWeight: 700,
@@ -235,6 +243,162 @@ export default function Home() {
                             </Button>
                         </Box>
                     </motion.div>
+                </Container>
+            </Box>
+
+            {/* ===== CONTRIBUTIONS ===== */}
+            <Box
+                component="section"
+                sx={{
+                    bgcolor: isEnhanced ? "rgba(0,0,0,0.5)" : "background.default",
+                    borderTop: sectionBorder,
+                    backdropFilter: isEnhanced ? "blur(10px)" : "none",
+                    py: { xs: 6, md: 8 },
+                }}
+            >
+                <Container maxWidth="lg">
+                    <motion.div
+                        initial={{ opacity: 0, y: 16 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.5 }}
+                    >
+                        <Typography
+                            variant="overline"
+                            sx={{ color: "primary.main", letterSpacing: "0.3em", fontSize: "0.75rem", fontWeight: 600 }}
+                        >
+                            Also
+                        </Typography>
+                        <Typography
+                            variant="h3"
+                            sx={{
+                                fontWeight: 800,
+                                mt: 0.5,
+                                mb: 1,
+                                ...(isEnhanced && { textShadow: "0 0 20px rgba(0,188,212,0.3)" }),
+                            }}
+                        >
+                            Contributions
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: "text.secondary", mb: 4, lineHeight: 1.7 }}>
+                            Sites I've contributed to with hosting, SEO, management, debugging, and ongoing improvements.
+                        </Typography>
+                    </motion.div>
+                </Container>
+
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6, delay: 0.1 }}
+                >
+                    <ContributionsMarquee />
+                </motion.div>
+            </Box>
+
+            {/* ===== DEVELOPMENT ===== */}
+            <Box
+                component="section"
+                sx={{
+                    bgcolor: sectionBg,
+                    borderTop: sectionBorder,
+                    backdropFilter: isEnhanced ? "blur(10px)" : "none",
+                    py: { xs: 8, md: 12 },
+                }}
+            >
+                <Container maxWidth="lg">
+                    <motion.div
+                        initial={{ opacity: 0, y: 16 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.5 }}
+                    >
+                        <Typography
+                            variant="overline"
+                            sx={{ color: "primary.main", letterSpacing: "0.3em", fontSize: "0.75rem", fontWeight: 600 }}
+                        >
+                            Training & Personal
+                        </Typography>
+                        <Typography
+                            variant="h3"
+                            sx={{
+                                fontWeight: 800,
+                                mt: 0.5,
+                                mb: 1,
+                                ...(isEnhanced && { textShadow: "0 0 20px rgba(0,188,212,0.3)" }),
+                            }}
+                        >
+                            Development
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: "text.secondary", mb: 5, maxWidth: 480, lineHeight: 1.7 }}>
+                            React projects built while training — live and deployed.
+                        </Typography>
+                    </motion.div>
+
+                    <Box
+                        sx={{
+                            display: "grid",
+                            gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)" },
+                            gap: 3,
+                        }}
+                    >
+                        {devProjects.map((project, i) => (
+                            <motion.div
+                                key={project.id}
+                                initial={{ opacity: 0, y: 20 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ duration: 0.45, delay: i * 0.1 }}
+                            >
+                                <Box
+                                    component="a"
+                                    href={project.link}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    sx={{
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        gap: 1.5,
+                                        p: 3,
+                                        borderRadius: "12px",
+                                        border: sectionBorder,
+                                        bgcolor: isEnhanced ? "rgba(255,255,255,0.02)" : "background.paper",
+                                        textDecoration: "none",
+                                        transition: "border-color 0.2s, box-shadow 0.2s",
+                                        "&:hover": {
+                                            borderColor: isEnhanced ? "rgba(0,214,252,0.4)" : "primary.main",
+                                            boxShadow: isEnhanced ? "0 0 20px rgba(0,214,252,0.08)" : "none",
+                                        },
+                                    }}
+                                >
+                                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                                        <Typography variant="h6" sx={{ fontWeight: 700, color: "text.primary" }}>
+                                            {project.title}
+                                        </Typography>
+                                        <FiExternalLink size={15} color={isEnhanced ? "rgba(0,214,252,0.5)" : undefined} />
+                                    </Box>
+                                    <Typography variant="body2" sx={{ color: "text.secondary", lineHeight: 1.7 }}>
+                                        {project.description}
+                                    </Typography>
+                                    <Stack direction="row" flexWrap="wrap" gap={0.75}>
+                                        {project.tags.map((tag) => (
+                                            <Chip
+                                                key={tag}
+                                                label={tag}
+                                                size="small"
+                                                sx={{
+                                                    bgcolor: isEnhanced ? "rgba(0,214,252,0.07)" : "action.hover",
+                                                    color: isEnhanced ? "#00d6fc" : "text.secondary",
+                                                    border: isEnhanced ? "1px solid rgba(0,214,252,0.2)" : `1px solid ${sectionBorder}`,
+                                                    fontSize: "0.7rem",
+                                                }}
+                                            />
+                                        ))}
+                                    </Stack>
+                                </Box>
+                            </motion.div>
+                        ))}
+                    </Box>
                 </Container>
             </Box>
 
@@ -307,6 +471,8 @@ export default function Home() {
                                         to="/about"
                                         variant="outlined"
                                         size="large"
+                                        onMouseEnter={playHover}
+                                        onClick={playClick}
                                         sx={{
                                             px: 4,
                                             fontWeight: 600,

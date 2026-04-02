@@ -3,6 +3,8 @@ import { Box, Chip, Stack, Typography, IconButton } from "@mui/material";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@mui/material/styles";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import { useUiStore } from "@/store/uiStore";
+import { useSfx } from "@/hooks/useSfx";
 
 const imageModules = import.meta.glob(
     "../assets/img/me/*.{jpg,png}",
@@ -43,6 +45,8 @@ const INTERVAL = 3500;
 export default function PhotoCarousel() {
     const theme = useTheme();
     const isEnhanced = theme.palette.mode === "dark";
+    const isRich = useUiStore((s) => s.visualMode === "rich");
+    const { playSwipe } = useSfx();
     const [activeCategory, setActiveCategory] = useState("All");
     const [index, setIndex] = useState(0);
     const [paused, setPaused] = useState(false);
@@ -66,10 +70,10 @@ export default function PhotoCarousel() {
     }, [activeCategory]);
 
     useEffect(() => {
-        if (paused) return;
+        if (paused || !isRich) return;
         const t = setInterval(() => advance(1), INTERVAL);
         return () => clearInterval(t);
-    }, [paused, advance]);
+    }, [paused, isRich, advance]);
 
     if (filtered.length === 0) return null;
 
@@ -197,7 +201,7 @@ export default function PhotoCarousel() {
                 >
                     <IconButton
                         size="small"
-                        onClick={() => advance(-1)}
+                        onClick={() => { playSwipe(); advance(-1); }}
                         sx={{
                             color: isEnhanced ? "rgba(0,214,252,0.7)" : "text.secondary",
                             border: "1px solid",
@@ -219,7 +223,7 @@ export default function PhotoCarousel() {
 
                     <IconButton
                         size="small"
-                        onClick={() => advance(1)}
+                        onClick={() => { playSwipe(); advance(1); }}
                         sx={{
                             color: isEnhanced ? "rgba(0,214,252,0.7)" : "text.secondary",
                             border: "1px solid",

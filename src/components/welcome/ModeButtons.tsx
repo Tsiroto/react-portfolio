@@ -34,8 +34,7 @@ function RetroButton({ label, selected = false, onClick, onHover }: RetroButtonP
                 fontWeight: 800,
                 fontSize: 14,
                 lineHeight: 1,
-                color: selected ? "#051016" : "#EAFBFF",
-                // Base: glassy fill + gradient border
+                color: "#EAFBFF",
                 background: selected
                     ? `${FILL_SELECTED} padding-box, ${GRADIENT} border-box`
                     : `${FILL_IDLE} padding-box, ${GRADIENT} border-box`,
@@ -55,7 +54,6 @@ function RetroButton({ label, selected = false, onClick, onHover }: RetroButtonP
                         ["transform", "box-shadow", "background", "color"],
                         { duration: 200, easing: "ease-out" }
                     ),
-
                 "&:hover": {
                     transform: "translateY(-2px) scale(1.03)",
                     boxShadow: selected
@@ -75,8 +73,6 @@ function RetroButton({ label, selected = false, onClick, onHover }: RetroButtonP
                       0 0 0 4px ${C2}55,
                       0 0 22px ${C2}AA`,
                 },
-
-                // outer neon aura (thicker ring with blur)
                 "&::before": {
                     content: '""',
                     position: "absolute",
@@ -87,19 +83,15 @@ function RetroButton({ label, selected = false, onClick, onHover }: RetroButtonP
                     filter: "blur(6px)",
                     zIndex: 0,
                 },
-
-                // inner double-line frame + top highlight
                 "&::after": {
                     content: '""',
                     position: "absolute",
                     inset: 4,
                     borderRadius: 9999,
                     background:
-                    // thin inner stroke
                         `linear-gradient(#ffffff10, #ffffff10) padding-box, ${GRADIENT} border-box`,
                     border: "2px solid transparent",
                     backgroundClip: "padding-box, border-box",
-                    // glossy top highlight
                     boxShadow:
                         "inset 0 10px 18px rgba(255,255,255,0.08), inset 0 -10px 18px rgba(0,0,0,0.35)",
                     zIndex: 0,
@@ -115,13 +107,13 @@ function RetroButton({ label, selected = false, onClick, onHover }: RetroButtonP
 }
 
 export default function ModeButtons({
-                                        show,
-                                        onModeChange,
-                                        onHover,
-                                        currentMode,
-                                        labels,
-                                        sx,
-                                    }: ModeButtonsProps) {
+    show,
+    onModeChange,
+    onHover,
+    currentMode,
+    labels,
+    sx,
+}: ModeButtonsProps) {
     if (!show) return null;
 
     const getLabel = (mode: VisitorMode) =>

@@ -14,7 +14,6 @@ import {
     Button,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import { useNavigate } from "react-router-dom";
 import { IoClose } from "react-icons/io5";
 import { HiOutlineMusicalNote } from "react-icons/hi2";
 import { MdOutlineAutoAwesome } from "react-icons/md";
@@ -113,7 +112,6 @@ export default function OptionsModal({ open, onClose }: Props) {
     const theme = useTheme();
     const isEnhanced = theme.palette.mode === "dark";
     const accentColor = isEnhanced ? "#00d6fc" : theme.palette.primary.main;
-    const navigate = useNavigate();
 
     // Audio
     const isMuted = useAudioStore((s) => s.isMuted);
@@ -151,7 +149,13 @@ export default function OptionsModal({ open, onClose }: Props) {
         setMode("light");
 
         onClose();
-        navigate("/");
+
+        // Cover the flash of unstyled content during reload
+        const cover = document.createElement("div");
+        cover.style.cssText = "position:fixed;inset:0;background:#0a0a0a;z-index:99999;";
+        document.body.appendChild(cover);
+
+        window.location.reload();
     };
 
     return (
